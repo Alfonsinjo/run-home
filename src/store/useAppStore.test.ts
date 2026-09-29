@@ -7,6 +7,7 @@ vi.mock('@/services/storage', () => ({
   clearState: vi.fn(async () => {}),
 }));
 
+import { loadState } from '@/services/storage';
 import { pickAppState, useAppStore } from './useAppStore';
 
 describe('useAppStore', () => {
@@ -73,5 +74,21 @@ describe('useAppStore', () => {
 
   it('pickAppState contains only persisted fields', () => {
     expect(Object.keys(pickAppState(useAppStore.getState())).sort()).toEqual(['achieved', 'entries', 'route', 'schemaVersion', 'settings', 'setupDone']);
+  });
+
+  it('hydrate() does not persist the initial hydrate transition, but later changes are persisted', async () => {
+    // beforeEach's resetAll() may have scheduled a debounced save while hydrated was still true
+    // from the previous test; drain it before asserting so it can't be mistaken for a hydrate-triggered save.
+    await new Promise((r) => setTimeout(r, 200));
+    saved.length = 0;
+    useAppStore.setState({ hydrated: false });
+    vi.mocked(loadState).mockResolvedValueOnce(null);
+    await useAppStore.getState().hydrate();
+    expect(useAppStore.getState().hydrated).toBe(true);
+    await new Promise((r) => setTimeout(r, 250));
+    expect(saved.length).toBe(0);
+    useAppStore.getState().saveEntry({ date: '2026-01-01', km: 3 }, '2026-01-01');
+    await new Promise((r) => setTimeout(r, 250));
+    expect(saved.length).toBeGreaterThan(0);
   });
 });

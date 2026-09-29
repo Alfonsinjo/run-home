@@ -111,7 +111,7 @@ export const useAppStore = create<StoreState>()((set, get) => ({
 // Persistenz: jede Änderung der AppState-Felder wird entprellt gespeichert.
 let timer: ReturnType<typeof setTimeout> | null = null;
 useAppStore.subscribe((state, prev) => {
-  if (!state.hydrated && !prev.hydrated) return;
+  if (!state.hydrated || !prev.hydrated) return;
   const a = pickAppState(state), b = pickAppState(prev);
   if (a.entries === b.entries && a.settings === b.settings && a.route === b.route && a.achieved === b.achieved && a.setupDone === b.setupDone) return;
   if (timer) clearTimeout(timer);
