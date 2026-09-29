@@ -20,7 +20,7 @@ Nutzer: eine Person, Sprache der App: Deutsch.
 | Thema | Entscheidung |
 |---|---|
 | Stack | Capacitor 8 + React 19 + TypeScript + Vite, Leaflet via react-leaflet |
-| Karte | OSM-Daten, Kacheln CARTO Dark Matter (kein API-Key), Route via öffentlichem OSRM-Server, Adresssuche via Nominatim |
+| Karte | OSM-Daten, Kacheln vom OSM-Standard-Tileserver mit CSS-Dunkelfilter (kein API-Key; CARTO verlangt seit 28.08.2026 einen Key), Route via öffentlichem OSRM-Server, Adresssuche via Nominatim |
 | Daten | Nur lokal (Capacitor Preferences / localStorage), Export/Import als JSON |
 | Ziel | Standard 510 km bis 31.12.2026, Startdatum 01.01.2026; alles in den Einstellungen änderbar |
 | Tagesziel | Standard „Aufhol-Tempo" (Rest-km / Rest-Tage); Alternativen „Fester Plan" (Ziel / Gesamttage) und „Eigener Wert" |
@@ -142,7 +142,7 @@ oder Zusammenführen (Einträge pro Datum, neuere Datei gewinnt).
 
 ## 6. Karte und Route
 
-- Leaflet mit CARTO Dark Matter Kacheln (Attribution OSM + CARTO eingeblendet).
+- Leaflet mit OSM-Standardkacheln `https://tile.openstreetmap.org/{z}/{x}/{y}.png` (Attribution: OpenStreetMap-Mitwirkende), Kachel-Ebene per CSS-Filter abgedunkelt, Marker und Linien bleiben ungefiltert.
 - Beim Speichern von Zuhause/Eltern im Setup wird die Route über OSRM (`router.project-osrm.org`, Profil `driving`, `overview=full`, `geometries=geojson`) geholt und lokal gespeichert. Fehler oder Timeout → Luftlinie (Great-Circle-Linie mit 64 Zwischenpunkten) und Hinweis. In den Einstellungen kann die Route neu berechnet werden.
 - Ebenen: gelaufener Teil der Route in Volt-Grün, offener Teil grau; Marker Zuhause, Eltern (Haus-Icon), aktuelle Position (pulsierender Punkt), Meilensteine (kleine Pins, erreichte gefüllt). Tippen auf einen Pin zeigt Name, km und Rest-km.
 - Home-Karte ist interaktiv (Zoom/Pan), Button „Zentrieren" zoomt auf die ganze Route.
