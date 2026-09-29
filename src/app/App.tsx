@@ -1,3 +1,22 @@
+import { useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { ToastHost } from '@/components';
+import { useAppStore } from '@/store/useAppStore';
+import { AppRoutes } from './routes';
+import './theme.css';
+import 'leaflet/dist/leaflet.css';
+
 export function App() {
-  return <main style={{ color: '#fff', background: '#0B0B0C', minHeight: '100vh', padding: 24 }}>Run Home {__APP_VERSION__}</main>;
+  const hydrated = useAppStore((s) => s.hydrated);
+  const hydrate = useAppStore((s) => s.hydrate);
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
+  if (!hydrated) return <div className="screen"><p className="muted">Lade…</p></div>;
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+      <ToastHost />
+    </BrowserRouter>
+  );
 }
