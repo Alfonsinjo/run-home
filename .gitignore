@@ -1,3 +1,17 @@
+node_modules
+dist
+dist.zip
 *.xlsx
 .semgrep/
 .superpowers/
+*.local
+android/app/build
+android/build
+android/.gradle
+android/local.properties
+android/app/release
+android/app/debug
+android/capacitor-cordova-android-plugins
+*.keystore
+*.jks
+.DS_Store
