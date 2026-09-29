@@ -19,7 +19,7 @@ Nutzer: eine Person, Sprache der App: Deutsch.
 
 | Thema | Entscheidung |
 |---|---|
-| Stack | Capacitor 7 + React 18 + TypeScript + Vite, Leaflet via react-leaflet |
+| Stack | Capacitor 8 + React 19 + TypeScript + Vite, Leaflet via react-leaflet |
 | Karte | OSM-Daten, Kacheln CARTO Dark Matter (kein API-Key), Route via öffentlichem OSRM-Server, Adresssuche via Nominatim |
 | Daten | Nur lokal (Capacitor Preferences / localStorage), Export/Import als JSON |
 | Ziel | Standard 510 km bis 31.12.2026, Startdatum 01.01.2026; alles in den Einstellungen änderbar |
