@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, Screen } from '@/components';
+import { EntrySheet } from '@/features/entry/EntrySheet';
 import { useAppStore } from '@/store/useAppStore';
 import { useDerived } from '@/store/selectors';
 import { RouteMap } from './RouteMap';
@@ -15,7 +16,6 @@ export function HomeScreen() {
   const route = useAppStore((s) => s.route);
   const achieved = useAppStore((s) => s.achieved);
   const [entryOpen, setEntryOpen] = useState(false);
-  void entryOpen; // EntrySheet wird in Task 14 eingebunden
 
   return (
     <Screen noPadding>
@@ -27,6 +27,7 @@ export function HomeScreen() {
         <NextMilestoneCard d={d} />
         <FunFactCard d={d} />
       </div>
+      <EntrySheet open={entryOpen} onClose={() => setEntryOpen(false)} />
       <Button size="lg" className="fab" onClick={() => setEntryOpen(true)}>+ Eintragen</Button>
     </Screen>
   );

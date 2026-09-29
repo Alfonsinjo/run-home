@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ToastHost } from '@/components';
+import { Celebration } from '@/features/entry/Celebration';
 import { useAppStore } from '@/store/useAppStore';
 import { AppRoutes } from './routes';
 import './theme.css';
@@ -16,6 +17,7 @@ export function App() {
   return (
     <BrowserRouter>
       <AppRoutes />
+      <Celebration />
       <ToastHost />
     </BrowserRouter>
   );
