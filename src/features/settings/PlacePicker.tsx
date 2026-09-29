@@ -5,8 +5,8 @@ import type { LatLon, Place } from '@/domain/types';
 import { searchPlaces, type GeoResult } from '@/services/geocoding';
 import { pinIcon } from '@/features/home/mapIcons';
 
-export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-export const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+export const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende';
 
 function ClickToPlace({ onPick }: { onPick(p: LatLon): void }) {
   useMapEvents({ click: (e) => onPick([e.latlng.lat, e.latlng.lng]) });

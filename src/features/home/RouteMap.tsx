@@ -22,7 +22,11 @@ export function RouteMap({ route, home, parents, totalKm, targetKm, milestones, 
   const lengthKm = route?.lengthKm ?? 0;
   const routeKm = progressToRouteKm(totalKm, targetKm, lengthKm);
   const { done, todo } = useMemo(() => splitAtKm(coords, routeKm), [coords, routeKm]);
-  const position: LatLon | null = coords.length ? pointAtKm(coords, routeKm) : null;
+  const position = useMemo<LatLon | null>(() => (coords.length ? pointAtKm(coords, routeKm) : null), [coords, routeKm]);
+  const milestonePositions = useMemo(
+    () => milestones.map((m) => ({ m, at: pointAtKm(coords, progressToRouteKm(m.km, targetKm, lengthKm)) })),
+    [coords, milestones, targetKm, lengthKm],
+  );
   const bounds = useMemo<L.LatLngBoundsExpression | null>(() => {
     const pts: LatLon[] = [...coords];
     if (home) pts.push([home.lat, home.lon]);
@@ -45,8 +49,7 @@ export function RouteMap({ route, home, parents, totalKm, targetKm, milestones, 
         <FitOnce bounds={bounds} />
         {todo.length > 1 && <Polyline positions={todo} pathOptions={{ color: '#5A5A60', weight: 5, opacity: 0.9 }} />}
         {done.length > 1 && <Polyline positions={done} pathOptions={{ color: '#D4FF3A', weight: 6 }} />}
-        {milestones.map((m) => {
-          const at = pointAtKm(coords, progressToRouteKm(m.km, targetKm, lengthKm));
+        {milestonePositions.map(({ m, at }) => {
           const isDone = m.id in achieved;
           return (
             <Marker key={m.id} position={at} icon={pinIcon('milestone', isDone)}>
