@@ -17,6 +17,16 @@ function FitOnce({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {
   return null;
 }
 
+function FitButton({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {
+  const map = useMap();
+  return (
+    <div className="map-overlay">
+      <span />
+      <button type="button" className="btn btn-secondary" onClick={() => bounds && map.fitBounds(bounds, { padding: [24, 24] })}>Zentrieren</button>
+    </div>
+  );
+}
+
 export function RouteMap({ route, home, parents, totalKm, targetKm, milestones, achieved, className = 'map-hero' }: Props) {
   const coords = route?.coords ?? [];
   const lengthKm = route?.lengthKm ?? 0;
@@ -47,6 +57,7 @@ export function RouteMap({ route, home, parents, totalKm, targetKm, milestones, 
       <MapContainer center={[home.lat, home.lon]} zoom={7} style={{ height: '100%', width: '100%' }} zoomControl={false} className="map-full">
         <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
         <FitOnce bounds={bounds} />
+        <FitButton bounds={bounds} />
         {todo.length > 1 && <Polyline positions={todo} pathOptions={{ color: '#5A5A60', weight: 5, opacity: 0.9 }} />}
         {done.length > 1 && <Polyline positions={done} pathOptions={{ color: '#D4FF3A', weight: 6 }} />}
         {milestonePositions.map(({ m, at }) => {
