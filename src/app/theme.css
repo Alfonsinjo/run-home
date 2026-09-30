@@ -16,7 +16,7 @@
   --success: #5CFF9D; --warn: #FFB84D; --danger: #FF5C5C;
   --radius: 16px; --radius-sm: 12px;
   --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
-  --tabbar-h: 64px; --entrybar-h: 72px; --footer-h: 80px;
+  --tabbar-h: 64px; --entrybar-h: 80px; --footer-h: 80px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -164,7 +164,7 @@ body:has(.setup-footer) .toast-host { bottom: calc(var(--footer-h) + var(--sab) 
 .footnote { color: var(--muted); font-size: 12px; text-align: center; padding: 8px 0; }
 
 /* Karte */
-.leaflet-container { background: #121214; font-family: var(--font); }
+.leaflet-container { background: #121214; font-family: var(--font); isolation: isolate; z-index: 0; }
 .leaflet-tile-pane { filter: grayscale(1) invert(1) brightness(.78) contrast(1.15); }
 .leaflet-control-attribution { background: rgba(11,11,12,.7) !important; color: var(--muted) !important; font-size: 10px !important; }
 .leaflet-control-attribution a { color: var(--muted) !important; }
