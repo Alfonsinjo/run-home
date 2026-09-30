@@ -73,14 +73,41 @@ jobs:
           VERSION: ${{ steps.v.outputs.version }}
         run: |
           set -euo pipefail
-          if [ -z "$RT" ]; then echo "::warning::RELEASES_TOKEN fehlt"; exit 0; fi
+          if [ -z "$RT" ]; then echo "::warning::RELEASES_TOKEN fehlt, OTA-Artefakte werden nicht veröffentlicht"; exit 0; fi
           api="https://api.github.com/repos/$OWNER/run-home-releases"
-          rel=$(curl -sf -X POST -H "Authorization: token $RT" -H "Accept: application/vnd.github+json" "$api/releases" \
-            -d "{\"tag_name\":\"v$VERSION\",\"name\":\"v$VERSION\",\"body\":\"Run Home $VERSION\"}")
-          id=$(echo "$rel" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id")
-          for f in run-home.apk dist.zip latest.json; do
+          uploads="https://uploads.github.com/repos/$OWNER/run-home-releases"
+          export ASSETS="run-home.apk dist.zip latest.json"
+          gh_api() { curl -sS --fail-with-body -H "Authorization: token $RT" -H "Accept: application/vnd.github+json" "$@"; }
+          # liest JSON von stdin und gibt das Ergebnis von JS-Ausdruck $1 (Variable r) aus
+          jq_node() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);const v=('"$1"');process.stdout.write(v==null?"":String(v))})'; }
+
+          # 1) Vorhandenes Release suchen: veröffentlicht über den Tag, sonst Entwurf aus einem abgebrochenen Lauf in der Liste
+          id=$(gh_api "$api/releases/tags/v$VERSION" 2>/dev/null | jq_node 'r.id' || true)
+          if [ -z "$id" ] || [ "$id" = "null" ]; then
+            id=$(gh_api "$api/releases?per_page=100" | jq_node '(r.find(x => x.tag_name === "v" + process.env.VERSION) || {}).id')
+          fi
+
+          if [ -n "$id" ] && [ "$id" != "null" ]; then
+            echo "Release v$VERSION existiert (id $id), ersetze gleichnamige Assets"
+            gh_api "$api/releases/$id/assets?per_page=100" \
+              | jq_node 'r.filter(a => process.env.ASSETS.split(" ").includes(a.name)).map(a => a.id).join(" ")' > "$RUNNER_TEMP/old-assets"
+            for aid in $(cat "$RUNNER_TEMP/old-assets"); do
+              gh_api -X DELETE "$api/releases/assets/$aid" > /dev/null
+            done
+          else
+            # 2) Neu als Entwurf anlegen, damit „latest" erst nach vollständigem Upload umschaltet
+            body=$(node -p 'JSON.stringify({ tag_name: "v" + process.env.VERSION, name: "v" + process.env.VERSION, body: "Run Home " + process.env.VERSION, draft: true })')
+            id=$(gh_api -X POST "$api/releases" -d "$body" | jq_node 'r.id')
+          fi
+          if [ -z "$id" ] || [ "$id" = "null" ]; then echo "::error::Keine Release-ID für v$VERSION im öffentlichen Repo erhalten"; exit 1; fi
+
+          # 3) Assets hochladen
+          for f in $ASSETS; do
             ctype=application/octet-stream; [ "$f" = latest.json ] && ctype=application/json
-            curl -sf -X POST -H "Authorization: token $RT" -H "Content-Type: $ctype" \
-              --data-binary "@$f" "https://uploads.github.com/repos/$OWNER/run-home-releases/releases/$id/assets?name=$f" > /dev/null
+            curl -sS --fail-with-body -X POST -H "Authorization: token $RT" -H "Content-Type: $ctype" \
+              --data-binary "@$f" "$uploads/releases/$id/assets?name=$f" > /dev/null
           done
+
+          # 4) Veröffentlichen (bei bestehendem Release ohne Wirkung)
+          gh_api -X PATCH "$api/releases/$id" -d '{"draft":false}' > /dev/null
           echo "Öffentliches Release v$VERSION hochgeladen"

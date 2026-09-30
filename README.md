@@ -48,11 +48,13 @@ Release erzeugen: `scripts/release.sh 1.0.1 "Was sich geändert hat"`
 3. Secrets `ANDROID_KEYSTORE_PASSWORD` (dein Passwort), `ANDROID_KEY_ALIAS` = `runhome`, `ANDROID_KEY_PASSWORD` (dein Passwort).
 Ohne Secrets baut der Workflow eine Debug-APK; die lässt sich nicht über eine signierte Release-APK installieren (vorher deinstallieren).
 
+**Achtung bei Debug-APKs:** Jeder CI-Lauf signiert die Debug-APK mit einem neuen, zufälligen Debug-Schlüssel. Eine neuere Debug-APK lässt sich daher nicht über die installierte drüberinstallieren. Ein Update heißt Deinstallieren, und dabei gehen alle lokalen Daten verloren. Vorher unbedingt unter Einstellungen → Daten einen JSON-Export machen und ihn danach wieder importieren. Mit eingerichteter Signatur entfällt das.
+
 ## Over-the-Air-Updates
 Die App lädt beim Start `latest.json` aus dem neuesten Release des öffentlichen Repos `run-home-releases`. Ist die Version neuer als die laufende, wird `dist.zip` geladen und beim nächsten Wechsel in den Hintergrund aktiviert. Reine Web-Änderungen brauchen keine neue APK. Nach nativen Änderungen (neues Capacitor-Plugin, Manifest) `minNativeVersion` im Workflow anheben und die APK neu installieren.
 
 ### Öffentliches Release-Repo
-Die Build-Artefakte (`run-home.apk`, `dist.zip`, `latest.json`) liegen öffentlich in [`gitbydbcconsulting/run-home-releases`](https://github.com/gitbydbcconsulting/run-home-releases); der Quellcode bleibt im privaten Repo `run-home`. Der Release-Workflow lädt sie dort mit dem Secret `RELEASES_TOKEN` hoch (ohne Secret wird der Schritt mit einer Warnung übersprungen). Empfohlen ist ein fein-granularer Token mit Contents: read/write nur für `run-home-releases`.
+Die Build-Artefakte (`run-home.apk`, `dist.zip`, `latest.json`) liegen öffentlich in [`gitbydbcconsulting/run-home-releases`](https://github.com/gitbydbcconsulting/run-home-releases); der Quellcode bleibt im privaten Repo `run-home`. Der Release-Workflow lädt sie dort mit dem Secret `RELEASES_TOKEN` hoch (ohne Secret wird der Schritt mit einer Warnung übersprungen). **Fehlt `RELEASES_TOKEN`, fallen OTA-Updates still aus:** Die App findet unter der öffentlichen `latest.json`-URL keine neue Version und meldet weiter „Aktuell" (oder einen Fehler, falls dort noch nie etwas veröffentlicht wurde). Der Workflow zeigt dann lediglich eine Warnung, der Job bleibt grün. Empfohlen ist ein fein-granularer Token mit Contents: read/write nur für `run-home-releases`.
 
 ## Daten
 Alles liegt lokal auf dem Gerät. Einstellungen → Daten: Export als JSON (komplett) oder CSV, Import mit Vorschau (Zusammenführen/Ersetzen). Die Excel „Laufliste 2026" ist als Seed eingebaut (`src/data/seed-2026.json`).

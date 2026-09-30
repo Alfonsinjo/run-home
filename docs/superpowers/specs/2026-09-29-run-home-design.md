@@ -129,10 +129,10 @@ oder Zusammenführen (Einträge pro Datum, neuere Datei gewinnt).
 
 - `totalKm = Σ entries.km` (nur Einträge ab `startDate`).
 - `remainingKm = max(0, targetKm − totalKm)`, `percent = totalKm / targetKm`.
-- `daysTotal = Tage von startDate bis deadline inkl.`, `daysElapsed`, `daysRemaining = Tage von heute bis deadline inkl.`.
+- `daysTotal = Tage von startDate bis deadline inkl.`, `daysElapsed`, `daysRemaining = Tage von morgen bis deadline inkl.` (heute zählt nicht mit, weil der heutige Lauf abends eingetragen wird; vor dem Start ab `startDate`, nach der Deadline 0).
 - Plan-Soll bis heute: `targetKm / daysTotal × daysElapsed`; Plus/Minus = `totalKm − Soll` (wie Excel).
-- Tagesziel:
-  - `catchup`: `remainingKm / daysRemaining`, gerundet auf 0,1 km, mindestens 0.
+- Tagesziel (in allen drei Modi auf 0,1 km gerundet, mindestens 0):
+  - `catchup`: `remainingKm / daysRemaining`. Am Deadline-Tag (`daysRemaining = 0`) ist das Tagesziel die gesamte Restdistanz. Nach der Deadline ist es 0; die Startseite zeigt dann „Deadline vorbei – jeder Kilometer zählt" und es werden keine Erinnerungen mehr geplant.
   - `plan`: `targetKm / daysTotal`.
   - `custom`: `customDailyKm`.
 - Wochenziel = `7 × Tagesziel`; Woche = Montag–Sonntag der aktuellen Woche; Anzeige gelaufen/Wochenziel und sieben Tagespunkte (erfüllt / teilweise / leer / zukünftig).
@@ -187,10 +187,11 @@ Vorsprung, Tag ohne Eintrag), auf Home und in Notifications.
   1. `npm ci`, `npm test`, `npm run build`.
   2. `dist.zip` aus `dist/` erzeugen.
   3. `npx cap sync android`, Gradle `assembleRelease`, signiert mit einem Keystore aus GitHub-Secrets (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`). Fehlen die Secrets, wird eine Debug-APK gebaut.
-  4. Release anlegen mit `app-release.apk`, `dist.zip`, `latest.json` (`{ version, url, minNativeVersion, notes }`).
+  4. Release im privaten Repo anlegen mit `run-home.apk`, `dist.zip`, `latest.json` (`{ version, url, minNativeVersion, notes }`).
+  5. Dieselben Artefakte zusätzlich im öffentlichen Repo `run-home-releases` veröffentlichen (Token-Secret `RELEASES_TOKEN`), weil die App ohne Token keine Assets aus einem privaten Repo laden kann. Der Schritt ist idempotent: ein vorhandenes Release wird wiederverwendet und seine gleichnamigen Assets ersetzt, ein neues wird erst als Entwurf angelegt und nach dem Upload veröffentlicht.
 - OTA in der App (`services/updater.ts`, nur nativ):
   1. Beim Start `notifyAppReady()`.
-  2. `latest.json` von der festen Release-URL `https://github.com/<owner>/run-home/releases/latest/download/latest.json` laden.
+  2. `latest.json` von der festen Release-URL `https://github.com/<owner>/run-home-releases/releases/latest/download/latest.json` (öffentliches Repo) laden.
   3. Wenn `version` neuer als die laufende Bundle-Version und `minNativeVersion` ≤ installierte native Version: `download({ version, url })`, dann `set()` beim nächsten Wechsel in den Hintergrund oder sofort per Button in den Einstellungen.
   4. Fehlgeschlagene Updates rollen automatisch zurück (Capgo-Mechanik).
 - Versionierung: `package.json`-Version ist die Bundle-Version; native `versionCode` wird nur bei nativen Änderungen erhöht.
