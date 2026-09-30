@@ -17,9 +17,9 @@ type Props = {
   className?: string;
 };
 
-/** Auf der Karte nur die großen Marken; die 50-km-Schritte bleiben in Balken und Zeitstrahl. */
 /** Unten mehr Rand, damit Chip und Verlauf keine Pins verdecken. */
 const FIT_OPTS: L.FitBoundsOptions = { paddingTopLeft: [24, 48], paddingBottomRight: [24, 100] };
+/** Auf der Karte nur die großen Marken; die 50-km-Schritte bleiben in Balken und Zeitstrahl. */
 const MAP_PERCENT_IDS = new Set(['auto-pct-25', 'auto-pct-50', 'auto-pct-75', 'auto-pct-100']);
 
 function FitOnce({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {

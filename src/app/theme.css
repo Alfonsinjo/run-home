@@ -54,7 +54,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 
 /* Karten */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-.card-inset { background: var(--surface-2); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; }
 .card-head h2 { font-size: 15px; font-weight: 600; }
 .card-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -161,7 +160,6 @@ body:has(.setup-footer) .toast-host { bottom: calc(var(--footer-h) + var(--sab) 
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; cursor: pointer; }
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .pill.accent { background: rgba(212,255,58,.12); color: var(--accent); }
-.footnote { color: var(--muted); font-size: 12px; text-align: center; padding: 8px 0; }
 
 /* Karte */
 .leaflet-container { background: #121214; font-family: var(--font); isolation: isolate; z-index: 0; }

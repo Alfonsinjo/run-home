@@ -3,6 +3,7 @@ import { Button, Card, useToast } from '@/components';
 import seed from '@/data/seed-2026.json';
 import { parseCsv, parseEntriesJson, parseExportJson, previewEntries, toCsv, toExportJson, type ImportPreview } from '@/domain/importer';
 import { formatKm } from '@/domain/progress';
+import { todayKey } from '@/domain/dates';
 import type { AppState, DayEntry } from '@/domain/types';
 import { cancelAllReminders } from '@/services/notifications';
 import { exportTextFile, pickTextFile } from '@/services/files';
@@ -14,11 +15,20 @@ export function DataSection() {
   const store = useAppStore();
   const [pending, setPending] = useState<{ entries: DayEntry[]; preview: ImportPreview; fullState?: AppState } | null>(null);
 
-  const exportJson = () => exportTextFile(`run-home-export-${new Date().toISOString().slice(0, 10)}.json`, toExportJson(pickAppState(store)), 'application/json');
-  const exportCsv = () => exportTextFile(`run-home-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(store.entries), 'text/csv');
+  const runExport = async (name: string, content: string, mime: string) => {
+    try {
+      await exportTextFile(name, content, mime);
+    } catch (e) {
+      // Schließen des Teilen-Dialogs ist kein Fehler.
+      if (/cancel/i.test((e as Error)?.message ?? '')) return;
+      toast(`Export fehlgeschlagen: ${(e as Error)?.message ?? e}`, 'error');
+    }
+  };
+  const exportJson = () => runExport(`run-home-export-${todayKey()}.json`, toExportJson(pickAppState(store)), 'application/json');
+  const exportCsv = () => runExport(`run-home-${todayKey()}.csv`, toCsv(store.entries), 'text/csv');
 
   const importFile = async () => {
-    const f = await pickTextFile('.csv,.json,text/csv,application/json');
+    const f = await pickTextFile('.csv,.json,.txt,text/csv,application/json,text/plain');
     if (!f) return;
     try {
       if (f.name.toLowerCase().endsWith('.json')) {

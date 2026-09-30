@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, Field, Screen, useToast } from '@/components';
+import { isValidDateKey } from '@/domain/dates';
 import { formatKm } from '@/domain/progress';
-import type { DailyGoalMode } from '@/domain/types';
+import type { DailyGoalMode, Place } from '@/domain/types';
 import { fetchRoute } from '@/services/routing';
 import { useAppStore } from '@/store/useAppStore';
 import { DataSection } from './DataSection';
@@ -23,13 +24,30 @@ export function SettingsScreen() {
   useEffect(() => { setTargetKm(String(settings.targetKm).replace('.', ',')); }, [settings.targetKm]);
   useEffect(() => { setCustomKm(String(settings.customDailyKm).replace('.', ',')); }, [settings.customDailyKm]);
 
-  const recompute = async (mode = settings.routeMode) => {
-    if (!settings.home || !settings.parents) { toast('Bitte zuerst beide Orte setzen.', 'error'); return; }
+  const recompute = async (mode = settings.routeMode, home = settings.home, parents = settings.parents) => {
+    if (!home || !parents) { toast('Bitte zuerst beide Orte setzen.', 'error'); return; }
     setBusy(true);
-    const { route: r, usedFallback } = await fetchRoute([settings.home.lat, settings.home.lon], [settings.parents.lat, settings.parents.lon], mode);
+    const { route: r, usedFallback } = await fetchRoute([home.lat, home.lon], [parents.lat, parents.lon], mode);
     setRoute(r);
     setBusy(false);
     toast(usedFallback ? `Straßenroute nicht verfügbar, Luftlinie: ${formatKm(r.lengthKm)}` : `Route: ${formatKm(r.lengthKm)}`, usedFallback ? 'error' : 'success');
+  };
+
+  // Ein neuer Ort macht die alte Route ungültig; sind beide Orte gesetzt, wird sofort neu berechnet.
+  const changePlace = (which: 'home' | 'parents', p: Place | null) => {
+    update({ [which]: p });
+    setRoute(null);
+    const home = which === 'home' ? p : settings.home;
+    const parents = which === 'parents' ? p : settings.parents;
+    if (home && parents) void recompute(settings.routeMode, home, parents);
+  };
+
+  const commitDate = (which: 'startDate' | 'deadline', value: string) => {
+    if (!isValidDateKey(value)) return;
+    const start = which === 'startDate' ? value : settings.startDate;
+    const end = which === 'deadline' ? value : settings.deadline;
+    if (end <= start) { toast('Deadline muss nach dem Start liegen', 'error'); return; }
+    update({ [which]: value });
   };
 
   const commitTarget = () => {
@@ -45,8 +63,8 @@ export function SettingsScreen() {
 
   return (
     <Screen title="Einstellungen">
-      <PlacePicker label="Dein Zuhause" value={settings.home} onChange={(p) => update({ home: p })} />
-      <PlacePicker label="Deine Eltern" value={settings.parents} onChange={(p) => update({ parents: p })} center={settings.home ? [settings.home.lat, settings.home.lon] : undefined} />
+      <PlacePicker label="Dein Zuhause" value={settings.home} onChange={(p) => changePlace('home', p)} />
+      <PlacePicker label="Deine Eltern" value={settings.parents} onChange={(p) => changePlace('parents', p)} center={settings.home ? [settings.home.lat, settings.home.lon] : undefined} />
       <Card title="Route" action={route ? <span className="pill num">{formatKm(route.lengthKm)}</span> : undefined}>
         <Field label="Art">
           <select value={settings.routeMode} onChange={(e) => { const m = e.target.value as 'osrm' | 'straight'; update({ routeMode: m }); void recompute(m); }}>
@@ -60,8 +78,8 @@ export function SettingsScreen() {
       <Card title="Ziel">
         <Field label="Zieldistanz (km)"><input value={targetKm} onChange={(e) => setTargetKm(e.target.value)} onBlur={commitTarget} inputMode="decimal" /></Field>
         <div className="grid-2">
-          <Field label="Start"><input type="date" value={settings.startDate} onChange={(e) => update({ startDate: e.target.value })} /></Field>
-          <Field label="Deadline"><input type="date" value={settings.deadline} min={settings.startDate} onChange={(e) => update({ deadline: e.target.value })} /></Field>
+          <Field label="Start"><input type="date" value={settings.startDate} max={settings.deadline} onChange={(e) => commitDate('startDate', e.target.value)} /></Field>
+          <Field label="Deadline"><input type="date" value={settings.deadline} min={settings.startDate} onChange={(e) => commitDate('deadline', e.target.value)} /></Field>
         </div>
         <Field label="Tagesziel">
           <select value={settings.dailyGoalMode} onChange={(e) => update({ dailyGoalMode: e.target.value as DailyGoalMode })}>

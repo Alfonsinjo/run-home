@@ -67,6 +67,6 @@ describe('preview / merge / replace / toCsv', () => {
   });
   it('toCsv writes German format sorted by date', () => {
     const csv = toCsv({ '2026-01-02': { date: '2026-01-02', km: 2.5, note: 'Regen' }, '2026-01-01': { date: '2026-01-01', km: 1 } });
-    expect(csv).toBe('Datum;km;Notiz\n01.01.2026;1,0;\n02.01.2026;2,5;Regen\n');
+    expect(csv).toBe('Datum;km;Notiz\n01.01.2026;1,00;\n02.01.2026;2,50;Regen\n');
   });
 });

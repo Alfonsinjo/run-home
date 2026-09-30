@@ -108,7 +108,7 @@ export function replaceEntries(incoming: DayEntry[]): Record<string, DayEntry> {
 export function toCsv(entries: Record<string, DayEntry>): string {
   const rows = Object.values(entries)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((e) => `${formatDateDe(e.date)};${e.km.toFixed(1).replace('.', ',')};${(e.note ?? '').replace(/[;\n]/g, ' ')}`);
+    .map((e) => `${formatDateDe(e.date)};${e.km.toFixed(2).replace('.', ',')};${(e.note ?? '').replace(/[;\n]/g, ' ')}`);
   return `Datum;km;Notiz\n${rows.join('\n')}\n`;
 }
 

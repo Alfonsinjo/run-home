@@ -7,6 +7,7 @@ import { formatKm } from '@/domain/progress';
 import type { DailyGoalMode, DayEntry, Milestone, Place, RouteData } from '@/domain/types';
 import { DEFAULT_SETTINGS } from '@/domain/types';
 import { fetchRoute } from '@/services/routing';
+import { isValidDateKey } from '@/domain/dates';
 import { ensureNotificationPermission } from '@/services/notifications';
 import { pickTextFile } from '@/services/files';
 import { parseCsv, parseEntriesJson } from '@/domain/importer';
@@ -37,7 +38,7 @@ export function SetupWizard() {
 
   const targetNum = Number(targetKm.replace(',', '.'));
   const targetValid = Number.isFinite(targetNum) && targetNum > 0;
-  const datesValid = startDate < deadline;
+  const datesValid = isValidDateKey(startDate) && isValidDateKey(deadline) && startDate < deadline;
 
   const computeRoute = async () => {
     if (!home || !parents) return;
@@ -49,7 +50,7 @@ export function SetupWizard() {
   };
 
   const importFile = async () => {
-    const f = await pickTextFile('.csv,.json,text/csv,application/json');
+    const f = await pickTextFile('.csv,.json,.txt,text/csv,application/json,text/plain');
     if (!f) return;
     try {
       const list = f.name.toLowerCase().endsWith('.json') ? parseEntriesJson(f.text) : parseCsv(f.text);
@@ -73,7 +74,10 @@ export function SetupWizard() {
 
   const next = async () => {
     if (step === 1 && home && parents && !route) await computeRoute();
-    if (step === 4 && reminderEnabled) await ensureNotificationPermission();
+    if (step === 4 && reminderEnabled && !(await ensureNotificationPermission())) {
+      setReminderEnabled(false);
+      toast('Benachrichtigungen sind nicht erlaubt. Erinnerungen bleiben aus, du kannst sie später in den Einstellungen aktivieren.', 'error');
+    }
     setStep((s) => Math.min(STEPS.length - 1, s + 1));
   };
 

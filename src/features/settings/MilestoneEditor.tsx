@@ -16,7 +16,7 @@ export function MilestoneEditor({ milestones, onChange, targetKm, route }: { mil
   const [km, setKm] = useState('');
   const [showMap, setShowMap] = useState(false);
   const kmNum = Number(km.replace(',', '.'));
-  const valid = title.trim().length > 0 && Number.isFinite(kmNum) && kmNum > 0 && kmNum < targetKm;
+  const valid = title.trim().length > 0 && Number.isFinite(kmNum) && kmNum >= 1 && kmNum < targetKm;
   // Wenn die Route länger/kürzer als das Ziel ist, wird die Karten-km proportional auf Ziel-km umgerechnet.
   const routeToTarget = (routeKm: number) => (route && route.lengthKm > 0 ? Math.round((routeKm / route.lengthKm) * targetKm * 10) / 10 : routeKm);
 
@@ -41,7 +41,7 @@ export function MilestoneEditor({ milestones, onChange, targetKm, route }: { mil
       </div>
       <div className="grid-2">
         <Field label="Name"><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Würzburg" /></Field>
-        <Field label="Bei km" hint={`1 bis ${targetKm - 1}`}><input value={km} onChange={(e) => setKm(e.target.value)} inputMode="decimal" placeholder="120" /></Field>
+        <Field label="Bei km" hint={`1 bis unter ${formatKm(targetKm)}`}><input value={km} onChange={(e) => setKm(e.target.value)} inputMode="decimal" placeholder="120" /></Field>
       </div>
       {route && (
         <Button variant="secondary" onClick={() => setShowMap((s) => !s)}>{showMap ? 'Karte ausblenden' : 'Position auf der Route antippen'}</Button>
