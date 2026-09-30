@@ -1,0 +1,61 @@
+name: Release
+on:
+  push:
+    tags: ['v*.*.*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Versionen prüfen
+        id: v
+        run: |
+          TAG=${GITHUB_REF_NAME#v}
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then echo "Tag $TAG != package.json $PKG"; exit 1; fi
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+      - name: OTA-Bundle packen
+        run: (cd dist && zip -qr ../dist.zip .)
+      - name: Native Version setzen
+        run: sed -i "s/versionName \".*\"/versionName \"${{ steps.v.outputs.version }}\"/" android/app/build.gradle
+      - run: npx cap sync android
+      - name: Keystore bereitstellen
+        if: env.HAS_KEYSTORE == 'true'
+        env: { KS: '${{ secrets.ANDROID_KEYSTORE_BASE64 }}' }
+        run: echo "$KS" | base64 -d > "$RUNNER_TEMP/release.keystore"
+      - name: APK bauen
+        working-directory: android
+        env:
+          RH_KEYSTORE_PATH: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && format('{0}/release.keystore', runner.temp) || '' }}
+          RH_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RH_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          RH_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          if [ -n "$RH_KEYSTORE_PATH" ]; then ./gradlew assembleRelease --no-daemon && cp app/build/outputs/apk/release/app-release.apk ../run-home.apk
+          else ./gradlew assembleDebug --no-daemon && cp app/build/outputs/apk/debug/app-debug.apk ../run-home.apk; echo "::warning::Keine Signatur-Secrets, Debug-APK gebaut"; fi
+      - name: latest.json
+        env:
+          OWNER: ${{ github.repository_owner }}
+          VERSION: ${{ steps.v.outputs.version }}
+          NOTES: ${{ github.event.head_commit.message }}
+        run: node scripts/make-latest-json.mjs "$OWNER" "$VERSION" "1.0.0" "$NOTES"
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            run-home.apk
+            dist.zip
+            latest.json
+          generate_release_notes: true

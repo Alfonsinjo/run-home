@@ -29,7 +29,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
+            if (System.getenv("RH_KEYSTORE_PATH")) { signingConfig signingConfigs.release }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
