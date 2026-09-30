@@ -4,6 +4,7 @@ import seed from '@/data/seed-2026.json';
 import { parseCsv, parseEntriesJson, parseExportJson, previewEntries, toCsv, toExportJson, type ImportPreview } from '@/domain/importer';
 import { formatKm } from '@/domain/progress';
 import type { AppState, DayEntry } from '@/domain/types';
+import { cancelAllReminders } from '@/services/notifications';
 import { exportTextFile, pickTextFile } from '@/services/files';
 import { clearState } from '@/services/storage';
 import { pickAppState, useAppStore } from '@/store/useAppStore';
@@ -51,6 +52,7 @@ export function DataSection() {
     if (!window.confirm('Wirklich alle Daten löschen? Ein Export vorher ist empfehlenswert.')) return;
     await clearState();
     store.resetAll();
+    await cancelAllReminders();
     toast('Alle Daten gelöscht.');
   };
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { App as CapApp } from '@capacitor/app';
 import { useToast } from '@/components';
-import { scheduleReminders } from '@/services/notifications';
+import { cancelAllReminders, scheduleReminders } from '@/services/notifications';
 import { isNative } from '@/services/platform';
 import { checkForUpdate, initUpdater } from '@/services/updater';
 import { useAppStore } from '@/store/useAppStore';
@@ -28,7 +28,7 @@ export function Bootstrap() {
   }, [toast]);
 
   useEffect(() => {
-    if (!setupDone) return;
+    if (!setupDone) { void cancelAllReminders(); return; }
     void scheduleReminders(settings, { today: d.today, todayHasEntry: d.todayKm > 0, dailyGoalKm: d.dailyGoal, remainingKm: d.progress.remainingKm });
   }, [setupDone, resumeTick, d.today, d.todayKm, d.dailyGoal, d.progress.remainingKm, settings]);
 

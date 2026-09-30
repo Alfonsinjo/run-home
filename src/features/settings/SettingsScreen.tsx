@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Card, Field, Screen, useToast } from '@/components';
 import { formatKm } from '@/domain/progress';
 import type { DailyGoalMode } from '@/domain/types';
@@ -19,6 +19,9 @@ export function SettingsScreen() {
   const [busy, setBusy] = useState(false);
   const [targetKm, setTargetKm] = useState(String(settings.targetKm).replace('.', ','));
   const [customKm, setCustomKm] = useState(String(settings.customDailyKm).replace('.', ','));
+
+  useEffect(() => { setTargetKm(String(settings.targetKm).replace('.', ',')); }, [settings.targetKm]);
+  useEffect(() => { setCustomKm(String(settings.customDailyKm).replace('.', ',')); }, [settings.customDailyKm]);
 
   const recompute = async (mode = settings.routeMode) => {
     if (!settings.home || !settings.parents) { toast('Bitte zuerst beide Orte setzen.', 'error'); return; }
