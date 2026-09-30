@@ -55,8 +55,10 @@ jobs:
         env:
           OWNER: ${{ github.repository_owner }}
           VERSION: ${{ steps.v.outputs.version }}
-          NOTES: ${{ github.event.head_commit.message }}
-        run: node scripts/make-latest-json.mjs "$OWNER" "$VERSION" "1.0.0" "$NOTES"
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          NOTES="$(printf '%s' "$MSG" | head -n1)"
+          node scripts/make-latest-json.mjs "$OWNER" "$VERSION" "1.0.0" "$NOTES"
       - uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -64,3 +66,21 @@ jobs:
             dist.zip
             latest.json
           generate_release_notes: true
+      - name: Öffentliches Release (run-home-releases)
+        env:
+          RT: ${{ secrets.RELEASES_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RT" ]; then echo "::warning::RELEASES_TOKEN fehlt"; exit 0; fi
+          api="https://api.github.com/repos/$OWNER/run-home-releases"
+          rel=$(curl -sf -X POST -H "Authorization: token $RT" -H "Accept: application/vnd.github+json" "$api/releases" \
+            -d "{\"tag_name\":\"v$VERSION\",\"name\":\"v$VERSION\",\"body\":\"Run Home $VERSION\"}")
+          id=$(echo "$rel" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id")
+          for f in run-home.apk dist.zip latest.json; do
+            ctype=application/octet-stream; [ "$f" = latest.json ] && ctype=application/json
+            curl -sf -X POST -H "Authorization: token $RT" -H "Content-Type: $ctype" \
+              --data-binary "@$f" "https://uploads.github.com/repos/$OWNER/run-home-releases/releases/$id/assets?name=$f" > /dev/null
+          done
+          echo "Öffentliches Release v$VERSION hochgeladen"

@@ -6,7 +6,7 @@ import { isNative } from './platform';
 export type UpdateStatus = { state: 'unsupported' | 'checking' | 'up-to-date' | 'downloaded' | 'error'; message: string; latestVersion?: string };
 
 // OWNER/REPO werden in Task 21 nach dem Anlegen des GitHub-Repos gesetzt.
-export const LATEST_JSON_URL = 'https://github.com/gitbydbcconsulting/run-home/releases/latest/download/latest.json';
+export const LATEST_JSON_URL = 'https://github.com/gitbydbcconsulting/run-home-releases/releases/latest/download/latest.json';
 
 type LatestJson = { version: string; url: string; minNativeVersion?: string; notes?: string };
 
