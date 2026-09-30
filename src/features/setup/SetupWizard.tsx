@@ -81,13 +81,19 @@ export function SetupWizard() {
   const preview = imported ? previewEntries(imported) : null;
 
   return (
-    <Screen subtitle={`Schritt ${step + 1} von ${STEPS.length}`} title={STEPS[step]}>
-      {step === 0 && (
-        <div className="card">
-          <h2 style={{ fontSize: 22 }}>Lauf nach Hause.</h2>
-          <p className="muted">Trag jeden Tag deine Kilometer ein und sieh auf der Karte, wie weit du schon bei deinen Eltern bist. Unterwegs warten Meilensteine und Fun Facts.</p>
-          <p className="muted">Zuerst ein paar Einstellungen. Alles lässt sich später ändern.</p>
+    <Screen className="setup">
+      <header>
+        <div className="step-dots" role="img" aria-label={`Schritt ${step + 1} von ${STEPS.length}`}>
+          {STEPS.map((s, i) => <i key={s} className={i === step ? 'current' : i < step ? 'done' : ''} />)}
         </div>
+        <h1 className="display" style={{ fontSize: 40 }}>{STEPS[step]}</h1>
+      </header>
+      {step === 0 && (
+        <>
+          <p className="display" style={{ fontSize: 26 }}>Lauf nach Hause.</p>
+          <p className="setup-intro">Trag jeden Tag deine Kilometer ein und sieh auf der Karte, wie weit du schon bei deinen Eltern bist. Unterwegs warten Meilensteine und Fun Facts.</p>
+          <p className="muted">Zuerst ein paar Einstellungen. Alles lässt sich später ändern.</p>
+        </>
       )}
       {step === 1 && (
         <>
@@ -122,9 +128,9 @@ export function SetupWizard() {
       {step === 3 && <MilestoneEditor milestones={milestones} onChange={setMilestones} targetKm={targetValid ? targetNum : 510} route={route} />}
       {step === 4 && (
         <div className="card">
-          <label className="row between"><span>Tägliche Erinnerung, wenn noch nichts eingetragen ist</span><input type="checkbox" style={{ width: 24, height: 24 }} checked={reminderEnabled} onChange={(e) => setReminderEnabled(e.target.checked)} /></label>
+          <label className="toggle-row"><span>Tägliche Erinnerung, wenn noch nichts eingetragen ist</span><input type="checkbox" checked={reminderEnabled} onChange={(e) => setReminderEnabled(e.target.checked)} /></label>
           {reminderEnabled && <Field label="Uhrzeit"><input type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} /></Field>}
-          <p className="muted">Wie bei Duolingo: Die Erinnerung kommt nur an Tagen ohne Eintrag.</p>
+          <p className="muted small">Wie bei Duolingo: Die Erinnerung kommt nur an Tagen ohne Eintrag.</p>
         </div>
       )}
       {step === 5 && (
@@ -138,7 +144,7 @@ export function SetupWizard() {
           {imported && <Button variant="ghost" onClick={() => setImported(null)}>Auswahl verwerfen</Button>}
         </div>
       )}
-      <div className="row between" style={{ marginTop: 'auto' }}>
+      <div className="setup-footer">
         <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>Zurück</Button>
         {step < STEPS.length - 1 ? (
           <Button size="lg" onClick={next} disabled={!canNext || routeBusy}>Weiter</Button>

@@ -43,11 +43,11 @@ export function EntrySheet({ open, onClose, date, onSaved }: { open: boolean; on
     <Sheet open={open} onClose={onClose} title={existing ? 'Eintrag bearbeiten' : 'Lauf eintragen'}>
       <Field label="Datum" error={errors.date}><input type="date" value={d} max={today} onChange={(e) => setD(e.target.value)} /></Field>
       <Field label="Kilometer" error={errors.km} hint={existing ? `Bisher ${formatKm(existing.km)} an diesem Tag. Der neue Wert ersetzt ihn.` : 'Mehrere Läufe? Einfach die Summe eintragen.'}>
-        <input value={km} onChange={(e) => setKm(e.target.value)} inputMode="decimal" placeholder="2,5" autoFocus style={{ fontSize: 28, fontWeight: 800 }} className="num" />
+        <input value={km} onChange={(e) => setKm(e.target.value)} inputMode="decimal" placeholder="2,5" autoFocus style={{ fontSize: 34, fontWeight: 700, fontFamily: 'var(--font-display)', minHeight: 64 }} className="num" />
       </Field>
-      <div className="row" style={{ flexWrap: 'wrap' }}>
+      <div className="chips">
         {QUICK.map((q) => (
-          <button key={q} type="button" className="pill" onClick={() => setKm(String(q).replace('.', ','))} style={{ cursor: 'pointer', border: 0 }}>{formatKm(q)}</button>
+          <button key={q} type="button" className="chip" onClick={() => setKm(String(q).replace('.', ','))}>{formatKm(q)}</button>
         ))}
       </div>
       <Field label="Notiz (optional)"><input value={note} onChange={(e) => setNote(e.target.value)} placeholder="z. B. Intervalle, Regen, mit Kinderwagen" /></Field>

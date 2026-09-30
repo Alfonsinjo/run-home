@@ -22,11 +22,11 @@ export function ReminderSection() {
   };
   return (
     <Card title="Erinnerungen">
-      <label className="row between"><span>Täglich erinnern, wenn nichts eingetragen ist</span><input type="checkbox" style={{ width: 24, height: 24 }} checked={settings.reminderEnabled} onChange={(e) => void toggle(e.target.checked)} /></label>
+      <label className="toggle-row"><span>Täglich erinnern, wenn nichts eingetragen ist</span><input type="checkbox" checked={settings.reminderEnabled} onChange={(e) => void toggle(e.target.checked)} /></label>
       {settings.reminderEnabled && (
         <>
           <Field label="Uhrzeit"><input type="time" value={settings.reminderTime} onChange={(e) => update({ reminderTime: e.target.value })} /></Field>
-          <label className="row between"><span>Zweite Erinnerung</span><input type="checkbox" style={{ width: 24, height: 24 }} checked={settings.secondReminderEnabled} onChange={(e) => update({ secondReminderEnabled: e.target.checked })} /></label>
+          <label className="toggle-row"><span>Zweite Erinnerung</span><input type="checkbox" checked={settings.secondReminderEnabled} onChange={(e) => update({ secondReminderEnabled: e.target.checked })} /></label>
           {settings.secondReminderEnabled && <Field label="Zweite Uhrzeit"><input type="time" value={settings.secondReminderTime} onChange={(e) => update({ secondReminderTime: e.target.value })} /></Field>}
         </>
       )}

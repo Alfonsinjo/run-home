@@ -2,8 +2,16 @@ import L from 'leaflet';
 
 export const pulseIcon = L.divIcon({ className: '', html: '<div class="pulse-marker"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
 
+/** Start- und Ziel-Pin (22 px, Tropfenform). */
 export function pinIcon(kind: 'home' | 'parents' | 'milestone', done = false): L.DivIcon {
-  const glyph = kind === 'home' ? '🏃' : kind === 'parents' ? '🏠' : done ? '★' : '☆';
-  const cls = kind === 'milestone' ? (done ? 'pin done' : 'pin') : 'pin home';
-  return L.divIcon({ className: '', html: `<div class="${cls}"><span>${glyph}</span></div>`, iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -28] });
+  if (kind === 'milestone') return milestoneIcon(done, false, false);
+  const glyph = kind === 'home' ? '🏃' : '🏠';
+  return L.divIcon({ className: '', html: `<div class="pin"><span>${glyph}</span></div>`, iconSize: [22, 22], iconAnchor: [11, 22], popupAnchor: [0, -22] });
+}
+
+/** Meilenstein-Punkt (22 px, rund). Erreicht: Volt-Rand; nächster: weiß gefüllt. */
+export function milestoneIcon(done: boolean, next: boolean, manual: boolean): L.DivIcon {
+  const glyph = manual ? '◆' : done ? '★' : '☆';
+  const cls = ['mpin', done ? 'done' : '', next ? 'next' : ''].filter(Boolean).join(' ');
+  return L.divIcon({ className: '', html: `<div class="${cls}">${glyph}</div>`, iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -12] });
 }

@@ -9,10 +9,10 @@ const tabs = [
 
 export function TabBar() {
   return (
-    <nav className="tabbar">
+    <nav className="tabbar" aria-label="Hauptnavigation">
       {tabs.map((t) => (
         <NavLink key={t.to} to={t.to} end={t.to === '/'} className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={t.d} /></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={t.d} /></svg>
           {t.label}
         </NavLink>
       ))}

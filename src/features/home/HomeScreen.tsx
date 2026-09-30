@@ -18,17 +18,23 @@ export function HomeScreen() {
   const [entryOpen, setEntryOpen] = useState(false);
 
   return (
-    <Screen noPadding>
-      <RouteMap route={route} home={settings.home} parents={settings.parents} totalKm={d.progress.totalKm} targetKm={settings.targetKm} milestones={d.milestones} achieved={achieved} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 16px' }}>
+    <Screen noPadding className="home">
+      <RouteMap
+        route={route} home={settings.home} parents={settings.parents}
+        totalKm={d.progress.totalKm} targetKm={settings.targetKm} remainingKm={d.progress.remainingKm}
+        milestones={d.milestones} achieved={achieved} nextId={d.next?.id}
+      />
+      <div className="home-cards">
         <ProgressCard d={d} />
         <TodayCard d={d} />
         <WeekCard d={d} />
         <NextMilestoneCard d={d} />
         <FunFactCard d={d} />
       </div>
+      <div className="entry-bar">
+        <Button size="lg" full onClick={() => setEntryOpen(true)}>Heute eintragen</Button>
+      </div>
       <EntrySheet open={entryOpen} onClose={() => setEntryOpen(false)} />
-      <Button size="lg" className="fab" onClick={() => setEntryOpen(true)}>+ Eintragen</Button>
     </Screen>
   );
 }

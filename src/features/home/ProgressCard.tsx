@@ -9,18 +9,13 @@ export function ProgressCard({ d }: { d: Derived }) {
   const markers: ProgressMarker[] = milestones.filter((m) => m.km < targetKm).map((m) => ({ percent: m.km / targetKm, done: m.km <= progress.totalKm, title: `${m.title} (${formatKm(m.km)})`, manual: m.kind === 'manual' }));
   const pm = progress.plusMinusKm;
   return (
-    <Card>
-      <div className="row between" style={{ alignItems: 'flex-end' }}>
-        <Stat value={formatKm(progress.totalKm)} label="gelaufen" size="xl" tone="accent" />
-        <Stat value={formatKm(progress.remainingKm)} label="noch offen" size="md" tone="muted" />
-      </div>
+    <Card aria-label="Fortschritt">
+      <Stat value={formatKm(progress.totalKm)} label={`gelaufen von ${formatKm(targetKm)}`} size="xl" tone="accent" />
       <ProgressBar percent={progress.percent} markers={markers} />
-      <div className="row between">
-        <span className="pill num">{Math.round(progress.percent * 100)} %</span>
-        <span className={`pill num ${pm >= 0 ? 'accent' : ''}`} style={pm < 0 ? { color: 'var(--warn)' } : undefined}>
-          {pm >= 0 ? '+' : ''}{pm.toFixed(1).replace('.', ',')} km zum Plan
-        </span>
-        <span className="pill num">{progress.daysRemaining} Tage</span>
+      <div className="stat-row">
+        <Stat value={`${Math.round(progress.percent * 100)} %`} label="geschafft" size="sm" />
+        <Stat value={`${pm >= 0 ? '+' : '−'}${Math.abs(pm).toFixed(1).replace('.', ',')} km`} label="zum Plan" size="sm" tone={pm < 0 ? 'warn' : 'default'} />
+        <Stat value={`${progress.daysRemaining} ${progress.daysRemaining === 1 ? 'Tag' : 'Tage'}`} label="bis zur Deadline" size="sm" />
       </div>
     </Card>
   );
