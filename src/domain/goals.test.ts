@@ -25,6 +25,13 @@ describe('dailyGoalKm', () => {
     expect(dailyGoalKm({ dailyGoalMode: 'catchup', customDailyKm: 2, targetKm: 510 }, done)).toBe(0);
     const late = computeProgress(entries([['2026-01-01', 100]]), base, '2027-01-01');
     expect(dailyGoalKm({ dailyGoalMode: 'catchup', customDailyKm: 2, targetKm: 510 }, late)).toBe(0);
+    expect(late.pastDeadline).toBe(true);
+  });
+  it('catchup on the deadline day is the whole remaining distance', () => {
+    const last = computeProgress(entries([['2026-01-01', 500]]), base, '2026-12-31');
+    expect(last.daysRemaining).toBe(0);
+    expect(last.pastDeadline).toBe(false);
+    expect(dailyGoalKm({ dailyGoalMode: 'catchup', customDailyKm: 2, targetKm: 510 }, last)).toBe(10);
   });
 });
 

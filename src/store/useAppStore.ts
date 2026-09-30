@@ -13,6 +13,9 @@ export type Celebration = { kind: 'milestone'; item: Milestone } | { kind: 'funf
 export type StoreState = AppState & {
   hydrated: boolean;
   celebrations: Celebration[];
+  /** Aktuelles lokales Datum (YYYY-MM-DD); nicht persistiert, wird bei Resume/Mitternacht aufgefrischt. */
+  today: string;
+  refreshToday(): void;
   hydrate(): Promise<void>;
   saveEntry(entry: DayEntry, today?: string): Celebration[];
   deleteEntry(date: string): void;
@@ -51,13 +54,19 @@ export const useAppStore = create<StoreState>()((set, get) => ({
   ...createInitialState(),
   hydrated: false,
   celebrations: [],
+  today: todayKey(),
+
+  refreshToday() {
+    const today = todayKey();
+    if (today !== get().today) set({ today });
+  },
 
   async hydrate() {
     const loaded = await loadState();
     set({ ...(loaded ?? createInitialState()), hydrated: true });
   },
 
-  saveEntry(entry, today = todayKey()) {
+  saveEntry(entry, today = get().today) {
     const km = Math.round(entry.km * 100) / 100;
     const clean: DayEntry = entry.note?.trim() ? { date: entry.date, km, note: entry.note.trim() } : { date: entry.date, km };
     const entries = { ...get().entries, [entry.date]: clean };

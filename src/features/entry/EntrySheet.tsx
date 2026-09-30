@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Button, Field, Sheet, useToast } from '@/components';
-import { todayKey } from '@/domain/dates';
 import { formatKm } from '@/domain/progress';
 import { useAppStore } from '@/store/useAppStore';
 import { validateEntryForm, type EntryFormErrors } from './entryForm';
@@ -11,7 +10,7 @@ export function EntrySheet({ open, onClose, date, onSaved }: { open: boolean; on
   const toast = useToast((s) => s.show);
   const entries = useAppStore((s) => s.entries);
   const saveEntry = useAppStore((s) => s.saveEntry);
-  const today = todayKey();
+  const today = useAppStore((s) => s.today);
   const [d, setD] = useState(date ?? today);
   const [km, setKm] = useState('');
   const [note, setNote] = useState('');
@@ -31,7 +30,7 @@ export function EntrySheet({ open, onClose, date, onSaved }: { open: boolean; on
     const { errors: errs, value } = validateEntryForm({ date: d, km }, today);
     setErrors(errs);
     if (!value) return;
-    const celebrations = saveEntry({ ...value, note });
+    const celebrations = saveEntry({ ...value, note }, today);
     toast(celebrations.length ? `${formatKm(value.km)} gespeichert. ${celebrations.length} neue Erfolge!` : `${formatKm(value.km)} gespeichert.`, 'success');
     onSaved?.(value.date);
     onClose();

@@ -8,6 +8,8 @@ export type ProgressSummary = {
   daysTotal: number;
   daysElapsed: number;
   daysRemaining: number;
+  /** true, sobald `today` nach der Deadline liegt. */
+  pastDeadline: boolean;
   planSollKm: number;
   plusMinusKm: number;
   finished: boolean;
@@ -45,6 +47,7 @@ export function computeProgress(
     daysTotal,
     daysElapsed,
     daysRemaining,
+    pastDeadline: today > deadline,
     planSollKm,
     plusMinusKm: totalKm - planSollKm,
     finished: totalKm >= targetKm,

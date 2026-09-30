@@ -16,6 +16,9 @@ const BODIES = [
   (goal: string, rest: string) => `Du hast heute noch nichts eingetragen. Ziel: ${goal}, Rest ${rest}.`,
 ];
 
+const TIME_RE = /^\d{2}:\d{2}$/;
+const CHANNEL = { id: 'reminders', name: 'Erinnerungen', description: 'Tägliche Lauf-Erinnerung', importance: 4 } as const;
+
 function atTime(dateKey: string, hhmm: string): Date {
   const [h, m] = hhmm.split(':').map(Number);
   const d = parseDateKey(dateKey);
@@ -24,16 +27,18 @@ function atTime(dateKey: string, hhmm: string): Date {
 }
 
 export function buildReminderPlan(settings: Settings, ctx: ReminderContext): PlannedReminder[] {
-  if (!settings.reminderEnabled) return [];
+  // Ungültige Uhrzeit wird wie „deaktiviert" behandelt.
+  if (!settings.reminderEnabled || !TIME_RE.test(settings.reminderTime)) return [];
   const now = ctx.now ?? new Date();
   const goal = formatKm(ctx.dailyGoalKm);
   const rest = formatKm(ctx.remainingKm);
   const plan: PlannedReminder[] = [];
   const slots: Array<[number, string]> = [[1000, settings.reminderTime]];
-  if (settings.secondReminderEnabled) slots.push([2000, settings.secondReminderTime]);
+  if (settings.secondReminderEnabled && TIME_RE.test(settings.secondReminderTime)) slots.push([2000, settings.secondReminderTime]);
   for (const [base, time] of slots) {
     for (let i = 0; i < DAYS; i++) {
       const date = addDays(ctx.today, i);
+      if (date > settings.deadline) break; // nach der Deadline wird nicht mehr erinnert
       const at = atTime(date, time);
       if (i === 0 && (ctx.todayHasEntry || at.getTime() <= now.getTime())) continue;
       plan.push({ id: base + i, at, title: TITLES[i % TITLES.length], body: BODIES[i % BODIES.length](goal, rest) });
@@ -45,6 +50,14 @@ export function buildReminderPlan(settings: Settings, ctx: ReminderContext): Pla
 const ALL_IDS = [...Array.from({ length: DAYS }, (_, i) => 1000 + i), ...Array.from({ length: DAYS }, (_, i) => 2000 + i)];
 let webPlan: PlannedReminder[] = [];
 
+// Alle Plugin-Aufrufe laufen nacheinander, damit sich Cancel/Schedule aus schnell aufeinanderfolgenden Effekten nicht überholen.
+let queue: Promise<unknown> = Promise.resolve();
+function serial<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
 export async function ensureNotificationPermission(): Promise<boolean> {
   if (!isNative()) return true;
   const status = await LocalNotifications.checkPermissions();
@@ -53,7 +66,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   return req.display === 'granted';
 }
 
-export async function cancelAllReminders(): Promise<void> {
+async function cancelOurs(): Promise<void> {
   webPlan = [];
   if (!isNative()) return;
   const pending = await LocalNotifications.getPending();
@@ -61,8 +74,16 @@ export async function cancelAllReminders(): Promise<void> {
   if (ours.length) await LocalNotifications.cancel({ notifications: ours.map((n) => ({ id: n.id })) });
 }
 
-export async function scheduleReminders(settings: Settings, ctx: ReminderContext): Promise<number> {
-  await cancelAllReminders();
+export function cancelAllReminders(): Promise<void> {
+  return serial(cancelOurs).catch((e) => { console.warn('[notifications] Abbrechen fehlgeschlagen:', e); });
+}
+
+export function scheduleReminders(settings: Settings, ctx: ReminderContext): Promise<number> {
+  return serial(() => scheduleNow(settings, ctx)).catch((e) => { console.warn('[notifications] Planen fehlgeschlagen:', e); return 0; });
+}
+
+async function scheduleNow(settings: Settings, ctx: ReminderContext): Promise<number> {
+  await cancelOurs();
   const plan = buildReminderPlan(settings, ctx);
   if (!isNative()) {
     webPlan = plan;
@@ -72,7 +93,7 @@ export async function scheduleReminders(settings: Settings, ctx: ReminderContext
   if (!plan.length) return 0;
   const ok = await ensureNotificationPermission();
   if (!ok) return 0;
-  await LocalNotifications.createChannel({ id: 'reminders', name: 'Erinnerungen', description: 'Tägliche Lauf-Erinnerung', importance: 4 });
+  await LocalNotifications.createChannel({ ...CHANNEL });
   const notifications: LocalNotificationSchema[] = plan.map((p) => ({
     id: p.id,
     title: p.title,
@@ -96,6 +117,7 @@ export async function sendTestNotification(): Promise<void> {
   }
   const ok = await ensureNotificationPermission();
   if (!ok) throw new Error('Keine Berechtigung für Benachrichtigungen.');
+  await LocalNotifications.createChannel({ ...CHANNEL });
   await LocalNotifications.schedule({
     notifications: [{ id: 9999, title: 'Run Home', body: 'Test-Benachrichtigung funktioniert.', schedule: { at: new Date(Date.now() + 3000) }, channelId: 'reminders' }],
   });

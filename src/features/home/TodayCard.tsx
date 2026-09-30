@@ -10,6 +10,7 @@ const num = (km: number) => formatKm(km).replace(' km', '');
 export function TodayCard({ d }: { d: Derived }) {
   const left = Math.max(0, d.dailyGoal - d.todayKm);
   const done = d.dailyGoal > 0 && d.todayKm >= d.dailyGoal;
+  const overdue = d.progress.pastDeadline && d.progress.remainingKm > 0;
   const ratio = d.dailyGoal > 0 ? Math.min(1, d.todayKm / d.dailyGoal) : 0;
   return (
     <Card title="Heute">
@@ -23,7 +24,7 @@ export function TodayCard({ d }: { d: Derived }) {
         </div>
         <div className="stat">
           <div className="today-value num">{num(d.todayKm)} <span className="of">von {formatKm(d.dailyGoal)}</span></div>
-          <div className="label">{done ? 'Tagesziel erreicht' : `noch ${formatKm(left)} bis zum Tagesziel`}</div>
+          <div className="label">{done ? 'Tagesziel erreicht' : overdue ? 'Deadline vorbei – jeder Kilometer zählt' : `noch ${formatKm(left)} bis zum Tagesziel`}</div>
         </div>
       </div>
       <div className="stat-row two">

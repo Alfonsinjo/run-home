@@ -25,4 +25,16 @@ describe('buildReminderPlan', () => {
     expect(both.filter((p) => p.id >= 2000)).toHaveLength(14);
     expect(buildReminderPlan({ ...DEFAULT_SETTINGS, reminderEnabled: false }, ctx)).toEqual([]);
   });
+  it('stops at the deadline and plans nothing after it', () => {
+    const s = { ...DEFAULT_SETTINGS, deadline: '2026-10-02' };
+    const plan = buildReminderPlan(s, ctx);
+    expect(plan).toHaveLength(4); // 29.09. bis 02.10.
+    expect(plan.at(-1)!.at.getDate()).toBe(2);
+    expect(buildReminderPlan({ ...s, deadline: '2026-09-28' }, ctx)).toEqual([]);
+  });
+  it('treats an empty or invalid time like disabled', () => {
+    expect(buildReminderPlan({ ...DEFAULT_SETTINGS, reminderTime: '' }, ctx)).toEqual([]);
+    const second = buildReminderPlan({ ...DEFAULT_SETTINGS, secondReminderEnabled: true, secondReminderTime: '' }, ctx);
+    expect(second.every((p) => p.id < 2000)).toBe(true);
+  });
 });

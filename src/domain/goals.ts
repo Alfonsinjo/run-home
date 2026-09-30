@@ -13,7 +13,9 @@ export function dailyGoalKm(
       return progress.daysTotal > 0 ? round1(settings.targetKm / progress.daysTotal) : 0;
     case 'catchup':
     default:
-      if (progress.remainingKm <= 0 || progress.daysRemaining <= 0) return 0;
+      // daysRemaining zählt ab morgen: am Deadline-Tag ist es 0, dann steht der ganze Rest an.
+      if (progress.remainingKm <= 0 || progress.pastDeadline) return 0;
+      if (progress.daysRemaining <= 0) return round1(progress.remainingKm);
       return round1(progress.remainingKm / progress.daysRemaining);
   }
 }

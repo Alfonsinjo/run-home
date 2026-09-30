@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { addDays, todayKey } from '@/domain/dates';
+import { addDays } from '@/domain/dates';
 import { latestFact, nextFact } from '@/domain/funfacts';
 import { computeStreak, computeWeek, dailyGoalKm, forecastArrival, type WeekSummary } from '@/domain/goals';
 import { allMilestones, nextMilestone } from '@/domain/milestones';
@@ -59,7 +59,7 @@ export function useDerived(): Derived {
   const settings = useAppStore((s) => s.settings);
   const route = useAppStore((s) => s.route);
   const achieved = useAppStore((s) => s.achieved);
-  const today = todayKey();
+  const today = useAppStore((s) => s.today);
   return useMemo(
     () => deriveAll({ schemaVersion: 1, setupDone: true, entries, settings, route, achieved }, today),
     [entries, settings, route, achieved, today],

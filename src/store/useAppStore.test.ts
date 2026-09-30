@@ -72,6 +72,20 @@ describe('useAppStore', () => {
     expect((saved[saved.length - 1] as { settings: { targetKm: number } }).settings.targetKm).toBe(600);
   });
 
+  it('refreshToday() updates the non-persisted today field', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 8, 29, 23, 59));
+      useAppStore.getState().refreshToday();
+      expect(useAppStore.getState().today).toBe('2026-09-29');
+      vi.setSystemTime(new Date(2026, 8, 30, 0, 0, 5));
+      useAppStore.getState().refreshToday();
+      expect(useAppStore.getState().today).toBe('2026-09-30');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('pickAppState contains only persisted fields', () => {
     expect(Object.keys(pickAppState(useAppStore.getState())).sort()).toEqual(['achieved', 'entries', 'route', 'schemaVersion', 'settings', 'setupDone']);
   });
