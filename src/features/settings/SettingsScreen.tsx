@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Field, Screen, useToast } from '@/components';
+import { Button, Card, DateInput, Field, Screen, useToast } from '@/components';
 import { isValidDateKey } from '@/domain/dates';
 import { formatKm } from '@/domain/progress';
 import type { DailyGoalMode, Place } from '@/domain/types';
@@ -78,8 +78,8 @@ export function SettingsScreen() {
       <Card title="Ziel">
         <Field label="Zieldistanz (km)"><input value={targetKm} onChange={(e) => setTargetKm(e.target.value)} onBlur={commitTarget} inputMode="decimal" /></Field>
         <div className="grid-2">
-          <Field label="Start"><input type="date" value={settings.startDate} max={settings.deadline} onChange={(e) => commitDate('startDate', e.target.value)} /></Field>
-          <Field label="Deadline"><input type="date" value={settings.deadline} min={settings.startDate} onChange={(e) => commitDate('deadline', e.target.value)} /></Field>
+          <Field label="Start"><DateInput value={settings.startDate} onChange={(v) => commitDate('startDate', v)} /></Field>
+          <Field label="Deadline"><DateInput value={settings.deadline} onChange={(v) => commitDate('deadline', v)} /></Field>
         </div>
         <Field label="Tagesziel">
           <select value={settings.dailyGoalMode} onChange={(e) => update({ dailyGoalMode: e.target.value as DailyGoalMode })}>

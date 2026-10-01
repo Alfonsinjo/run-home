@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Field, Sheet, useToast } from '@/components';
+import { Button, DateInput, Field, Sheet, useToast } from '@/components';
 import { formatKm } from '@/domain/progress';
 import { useAppStore } from '@/store/useAppStore';
 import { validateEntryForm, type EntryFormErrors } from './entryForm';
@@ -40,7 +40,7 @@ export function EntrySheet({ open, onClose, date, onSaved }: { open: boolean; on
 
   return (
     <Sheet open={open} onClose={onClose} title={existing ? 'Eintrag bearbeiten' : 'Lauf eintragen'}>
-      <Field label="Datum" error={errors.date}><input type="date" value={d} max={today} onChange={(e) => setD(e.target.value)} /></Field>
+      <Field label="Datum" error={errors.date}><DateInput value={d} max={today} onChange={setD} /></Field>
       <Field label="Kilometer" error={errors.km} hint={existing ? `Bisher ${formatKm(existing.km)} an diesem Tag. Der neue Wert ersetzt ihn.` : 'Mehrere Läufe? Einfach die Summe eintragen.'}>
         <input value={km} onChange={(e) => setKm(e.target.value)} inputMode="decimal" placeholder="2,5" autoFocus style={{ fontSize: 34, fontWeight: 700, fontFamily: 'var(--font-display)', minHeight: 64 }} className="num" />
       </Field>

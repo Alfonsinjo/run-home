@@ -8,3 +8,5 @@ export { TabBar } from './TabBar';
 export { Screen } from './Screen';
 export { ToastHost, useToast } from './Toast';
 export { Field } from './Field';
+export { DateInput } from './DateInput';
+export { TimeInput } from './TimeInput';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Field, Screen, useToast } from '@/components';
+import { Button, DateInput, Field, Screen, TimeInput, useToast } from '@/components';
 import seed from '@/data/seed-2026.json';
 import { previewEntries } from '@/domain/importer';
 import { formatKm } from '@/domain/progress';
@@ -116,8 +116,8 @@ export function SetupWizard() {
           </Field>
           {route && <Button variant="secondary" onClick={() => setTargetKm(String(route.lengthKm).replace('.', ','))}>Routenlänge übernehmen</Button>}
           <div className="grid-2">
-            <Field label="Start"><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
-            <Field label="Deadline" error={datesValid ? undefined : 'Deadline muss nach dem Start liegen'}><input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></Field>
+            <Field label="Start"><DateInput value={startDate} onChange={setStartDate} /></Field>
+            <Field label="Deadline" error={datesValid ? undefined : 'Deadline muss nach dem Start liegen'}><DateInput value={deadline} onChange={setDeadline} /></Field>
           </div>
           <Field label="Tagesziel">
             <select value={mode} onChange={(e) => setMode(e.target.value as DailyGoalMode)}>
@@ -133,7 +133,7 @@ export function SetupWizard() {
       {step === 4 && (
         <div className="card">
           <label className="toggle-row"><span>Tägliche Erinnerung, wenn noch nichts eingetragen ist</span><input type="checkbox" checked={reminderEnabled} onChange={(e) => setReminderEnabled(e.target.checked)} /></label>
-          {reminderEnabled && <Field label="Uhrzeit"><input type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} /></Field>}
+          {reminderEnabled && <Field label="Uhrzeit"><TimeInput value={reminderTime} onChange={setReminderTime} /></Field>}
           <p className="muted small">Wie bei Duolingo: Die Erinnerung kommt nur an Tagen ohne Eintrag.</p>
         </div>
       )}

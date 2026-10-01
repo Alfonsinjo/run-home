@@ -47,3 +47,25 @@ export function formatDateDe(key: string): string {
   const [y, m, d] = key.split('-');
   return `${d}.${m}.${y}`;
 }
+
+/** Parst deutsche Datumseingaben (TT.MM.JJJJ, auch T.M.JJ oder ISO) zu YYYY-MM-DD; null wenn ungültig. */
+export function parseDateDe(text: string): string | null {
+  const s = text.trim();
+  if (isValidDateKey(s)) return s;
+  const m = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})$/);
+  if (!m) return null;
+  const year = m[3].length === 2 ? `20${m[3]}` : m[3];
+  const key = `${year}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  return isValidDateKey(key) ? key : null;
+}
+
+/** Parst Uhrzeiten (H:MM, HH:MM, HH.MM, HHMM, 24 h) zu HH:MM; null wenn ungültig. */
+export function parseTimeDe(text: string): string | null {
+  const s = text.trim();
+  const m = s.match(/^(\d{1,2})(?:[:.h]?(\d{2}))?$/);
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = m[2] === undefined ? 0 : Number(m[2]);
+  if (h > 23 || min > 59) return null;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}

@@ -4,11 +4,45 @@ import {
   daysBetweenInclusive,
   formatDateDe,
   isValidDateKey,
+  parseDateDe,
   parseDateKey,
+  parseTimeDe,
   startOfWeek,
   toDateKey,
   todayKey,
 } from './dates';
+
+describe('parseDateDe', () => {
+  it('accepts German and ISO formats', () => {
+    expect(parseDateDe('28.09.2026')).toBe('2026-09-28');
+    expect(parseDateDe('1.1.26')).toBe('2026-01-01');
+    expect(parseDateDe(' 05/03/2026 ')).toBe('2026-03-05');
+    expect(parseDateDe('2026-09-28')).toBe('2026-09-28');
+  });
+  it('rejects impossible or malformed dates', () => {
+    expect(parseDateDe('31.02.2026')).toBeNull();
+    expect(parseDateDe('2026')).toBeNull();
+    expect(parseDateDe('')).toBeNull();
+    expect(parseDateDe('28.09.202')).toBeNull();
+  });
+});
+
+describe('parseTimeDe', () => {
+  it('normalises 24h times', () => {
+    expect(parseTimeDe('19:00')).toBe('19:00');
+    expect(parseTimeDe('7:05')).toBe('07:05');
+    expect(parseTimeDe('7')).toBe('07:00');
+    expect(parseTimeDe('19.30')).toBe('19:30');
+    expect(parseTimeDe('1930')).toBe('19:30');
+  });
+  it('rejects out-of-range or malformed input', () => {
+    expect(parseTimeDe('7:5')).toBeNull();
+    expect(parseTimeDe('24:00')).toBeNull();
+    expect(parseTimeDe('19:60')).toBeNull();
+    expect(parseTimeDe('abc')).toBeNull();
+    expect(parseTimeDe('')).toBeNull();
+  });
+});
 
 describe('dates', () => {
   it('toDateKey uses local date parts', () => {

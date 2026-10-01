@@ -1,4 +1,4 @@
-import { Button, Card, Field, useToast } from '@/components';
+import { Button, Card, Field, TimeInput, useToast } from '@/components';
 import { ensureNotificationPermission, getWebPlanPreview, sendTestNotification } from '@/services/notifications';
 import { isNative } from '@/services/platform';
 import { useAppStore } from '@/store/useAppStore';
@@ -30,9 +30,9 @@ export function ReminderSection() {
       <label className="toggle-row"><span>Täglich erinnern, wenn nichts eingetragen ist</span><input type="checkbox" checked={settings.reminderEnabled} onChange={(e) => void toggle(e.target.checked)} /></label>
       {settings.reminderEnabled && (
         <>
-          <Field label="Uhrzeit"><input type="time" value={settings.reminderTime} onChange={(e) => setTime('reminderTime', e.target.value)} /></Field>
+          <Field label="Uhrzeit"><TimeInput value={settings.reminderTime} onChange={(v) => setTime('reminderTime', v)} /></Field>
           <label className="toggle-row"><span>Zweite Erinnerung</span><input type="checkbox" checked={settings.secondReminderEnabled} onChange={(e) => update({ secondReminderEnabled: e.target.checked })} /></label>
-          {settings.secondReminderEnabled && <Field label="Zweite Uhrzeit"><input type="time" value={settings.secondReminderTime} onChange={(e) => setTime('secondReminderTime', e.target.value)} /></Field>}
+          {settings.secondReminderEnabled && <Field label="Zweite Uhrzeit"><TimeInput value={settings.secondReminderTime} onChange={(v) => setTime('secondReminderTime', v)} /></Field>}
         </>
       )}
       <Button variant="secondary" onClick={test}>Test-Benachrichtigung</Button>
