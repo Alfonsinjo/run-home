@@ -2,7 +2,7 @@
 
 Persönlicher Lauf-Tracker: jeden Tag Kilometer eintragen und auf der Karte sehen, wie weit du auf der Strecke zu deinen Eltern schon bist. Mit Meilensteinen, Fun Facts (mit Quellen), Wochenziel, Erinnerungen und Over-the-Air-Updates.
 
-Aktuelles Release: [neuestes Release](https://github.com/gitbydbcconsulting/run-home-releases/releases/latest) (`run-home.apk`, `dist.zip`, `latest.json`)
+Aktuelles Release: [neuestes Release](https://github.com/Alfonsinjo/run-home-releases/releases/latest) (`run-home.apk`, `dist.zip`, `latest.json`)
 
 ## Screenshots
 
@@ -54,7 +54,7 @@ Ohne Secrets baut der Workflow eine Debug-APK; die lässt sich nicht über eine 
 Die App lädt beim Start `latest.json` aus dem neuesten Release des öffentlichen Repos `run-home-releases`. Ist die Version neuer als die laufende, wird `dist.zip` geladen und beim nächsten Wechsel in den Hintergrund aktiviert. Reine Web-Änderungen brauchen keine neue APK. Nach nativen Änderungen (neues Capacitor-Plugin, Manifest) `minNativeVersion` im Workflow anheben und die APK neu installieren.
 
 ### Öffentliches Release-Repo
-Die Build-Artefakte (`run-home.apk`, `dist.zip`, `latest.json`) liegen öffentlich in [`gitbydbcconsulting/run-home-releases`](https://github.com/gitbydbcconsulting/run-home-releases); der Quellcode bleibt im privaten Repo `run-home`. Der Release-Workflow lädt sie dort mit dem Secret `RELEASES_TOKEN` hoch (ohne Secret wird der Schritt mit einer Warnung übersprungen). **Fehlt `RELEASES_TOKEN`, fallen OTA-Updates still aus:** Die App findet unter der öffentlichen `latest.json`-URL keine neue Version und meldet weiter „Aktuell" (oder einen Fehler, falls dort noch nie etwas veröffentlicht wurde). Der Workflow zeigt dann lediglich eine Warnung, der Job bleibt grün. Empfohlen ist ein fein-granularer Token mit Contents: read/write nur für `run-home-releases`.
+Die Build-Artefakte (`run-home.apk`, `dist.zip`, `latest.json`) liegen öffentlich in [`Alfonsinjo/run-home-releases`](https://github.com/Alfonsinjo/run-home-releases); der Quellcode bleibt im privaten Repo `run-home`. Der Release-Workflow lädt sie dort mit dem Secret `RELEASES_TOKEN` hoch (ohne Secret wird der Schritt mit einer Warnung übersprungen). **Fehlt `RELEASES_TOKEN`, fallen OTA-Updates still aus:** Die App findet unter der öffentlichen `latest.json`-URL keine neue Version und meldet weiter „Aktuell" (oder einen Fehler, falls dort noch nie etwas veröffentlicht wurde). Der Workflow zeigt dann lediglich eine Warnung, der Job bleibt grün. Empfohlen ist ein fein-granularer Token mit Contents: read/write nur für `run-home-releases`.
 
 ## Daten
 Alles liegt lokal auf dem Gerät. Einstellungen → Daten: Export als JSON (komplett) oder CSV, Import mit Vorschau (Zusammenführen/Ersetzen). Die Excel „Laufliste 2026" ist als Seed eingebaut (`src/data/seed-2026.json`).

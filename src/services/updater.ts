@@ -5,7 +5,7 @@ import { isNative } from './platform';
 
 export type UpdateStatus = { state: 'unsupported' | 'checking' | 'up-to-date' | 'downloaded' | 'error'; message: string; latestVersion?: string };
 
-export const LATEST_JSON_URL = 'https://github.com/gitbydbcconsulting/run-home-releases/releases/latest/download/latest.json';
+export const LATEST_JSON_URL = 'https://github.com/Alfonsinjo/run-home-releases/releases/latest/download/latest.json';
 
 type LatestJson = { version: string; url: string; minNativeVersion?: string; notes?: string };
 
