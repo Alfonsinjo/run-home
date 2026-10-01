@@ -30,11 +30,17 @@ jobs:
           TAG=${GITHUB_REF_NAME#v}
           PKG=$(node -p "require('./package.json').version")
           if [ "$TAG" != "$PKG" ]; then echo "Tag $TAG != package.json $PKG"; exit 1; fi
+          # versionCode aus X.Y.Z: 1.0.2 -> 10002, muss bei jedem Release steigen
+          CODE=$(echo "$TAG" | awk -F. '{ printf "%d", $1*10000 + $2*100 + $3 }')
           echo "version=$TAG" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
       - name: OTA-Bundle packen
         run: (cd dist && zip -qr ../dist.zip .)
       - name: Native Version setzen
-        run: sed -i "s/versionName \".*\"/versionName \"${{ steps.v.outputs.version }}\"/" android/app/build.gradle
+        run: |
+          sed -i "s/versionName \".*\"/versionName \"${{ steps.v.outputs.version }}\"/" android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode ${{ steps.v.outputs.code }}/" android/app/build.gradle
+          grep -n "versionCode\|versionName" android/app/build.gradle
       - run: npx cap sync android
       - name: Keystore bereitstellen
         if: env.HAS_KEYSTORE == 'true'
@@ -50,7 +56,7 @@ jobs:
         run: |
           chmod +x gradlew
           if [ -n "$RH_KEYSTORE_PATH" ]; then ./gradlew assembleRelease --no-daemon && cp app/build/outputs/apk/release/app-release.apk ../run-home.apk
-          else ./gradlew assembleDebug --no-daemon && cp app/build/outputs/apk/debug/app-debug.apk ../run-home.apk; echo "::warning::Keine Signatur-Secrets, Debug-APK gebaut"; fi
+          else ./gradlew assembleDebug --no-daemon && cp app/build/outputs/apk/debug/app-debug.apk ../run-home.apk; echo "::warning::Keine Signatur-Secrets, Debug-APK gebaut (siehe README, Signatur einrichten)"; fi
       - name: latest.json
         env:
           OWNER: ${{ github.repository_owner }}
@@ -66,48 +72,3 @@ jobs:
             dist.zip
             latest.json
           generate_release_notes: true
-      - name: Öffentliches Release (run-home-releases)
-        env:
-          RT: ${{ secrets.RELEASES_TOKEN }}
-          OWNER: ${{ github.repository_owner }}
-          VERSION: ${{ steps.v.outputs.version }}
-        run: |
-          set -euo pipefail
-          if [ -z "$RT" ]; then echo "::warning::RELEASES_TOKEN fehlt, OTA-Artefakte werden nicht veröffentlicht"; exit 0; fi
-          api="https://api.github.com/repos/$OWNER/run-home-releases"
-          uploads="https://uploads.github.com/repos/$OWNER/run-home-releases"
-          export ASSETS="run-home.apk dist.zip latest.json"
-          gh_api() { curl -sS --fail-with-body -H "Authorization: token $RT" -H "Accept: application/vnd.github+json" "$@"; }
-          # liest JSON von stdin und gibt das Ergebnis von JS-Ausdruck $1 (Variable r) aus
-          jq_node() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);const v=('"$1"');process.stdout.write(v==null?"":String(v))})'; }
-
-          # 1) Vorhandenes Release suchen: veröffentlicht über den Tag, sonst Entwurf aus einem abgebrochenen Lauf in der Liste
-          id=$(gh_api "$api/releases/tags/v$VERSION" 2>/dev/null | jq_node 'r.id' || true)
-          if [ -z "$id" ] || [ "$id" = "null" ]; then
-            id=$(gh_api "$api/releases?per_page=100" | jq_node '(r.find(x => x.tag_name === "v" + process.env.VERSION) || {}).id')
-          fi
-
-          if [ -n "$id" ] && [ "$id" != "null" ]; then
-            echo "Release v$VERSION existiert (id $id), ersetze gleichnamige Assets"
-            gh_api "$api/releases/$id/assets?per_page=100" \
-              | jq_node 'r.filter(a => process.env.ASSETS.split(" ").includes(a.name)).map(a => a.id).join(" ")' > "$RUNNER_TEMP/old-assets"
-            for aid in $(cat "$RUNNER_TEMP/old-assets"); do
-              gh_api -X DELETE "$api/releases/assets/$aid" > /dev/null
-            done
-          else
-            # 2) Neu als Entwurf anlegen, damit „latest" erst nach vollständigem Upload umschaltet
-            body=$(node -p 'JSON.stringify({ tag_name: "v" + process.env.VERSION, name: "v" + process.env.VERSION, body: "Run Home " + process.env.VERSION, draft: true })')
-            id=$(gh_api -X POST "$api/releases" -d "$body" | jq_node 'r.id')
-          fi
-          if [ -z "$id" ] || [ "$id" = "null" ]; then echo "::error::Keine Release-ID für v$VERSION im öffentlichen Repo erhalten"; exit 1; fi
-
-          # 3) Assets hochladen
-          for f in $ASSETS; do
-            ctype=application/octet-stream; [ "$f" = latest.json ] && ctype=application/json
-            curl -sS --fail-with-body -X POST -H "Authorization: token $RT" -H "Content-Type: $ctype" \
-              --data-binary "@$f" "$uploads/releases/$id/assets?name=$f" > /dev/null
-          done
-
-          # 4) Veröffentlichen (bei bestehendem Release ohne Wirkung)
-          gh_api -X PATCH "$api/releases/$id" -d '{"draft":false}' > /dev/null
-          echo "Öffentliches Release v$VERSION hochgeladen"

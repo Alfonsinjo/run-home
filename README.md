@@ -2,7 +2,7 @@
 
 Persönlicher Lauf-Tracker: jeden Tag Kilometer eintragen und auf der Karte sehen, wie weit du auf der Strecke zu deinen Eltern schon bist. Mit Meilensteinen, Fun Facts (mit Quellen), Wochenziel, Erinnerungen und Over-the-Air-Updates.
 
-Aktuelles Release: [neuestes Release](https://github.com/Alfonsinjo/run-home-releases/releases/latest) (`run-home.apk`, `dist.zip`, `latest.json`)
+**Installieren:** [run-home.apk](https://github.com/Alfonsinjo/run-home/releases/latest/download/run-home.apk) aufs Handy laden, öffnen, „Unbekannte Quellen“ einmalig erlauben, fertig. Keine Konten, keine Schlüssel, alle Daten bleiben auf dem Gerät. Alle Releases: [Releases](https://github.com/Alfonsinjo/run-home/releases).
 
 ## Screenshots
 
@@ -19,7 +19,7 @@ Vorher/Nachher-Vergleich der Design-Politur: [docs/screenshots/README.md](docs/s
 ## Am Windows-PC testen (WSL)
 
 ```bash
-cd ~/workspace/runapp-matthias
+cd ~/workspace/run-home
 npm install
 npm run dev
 ```
@@ -36,25 +36,35 @@ OUT_DIR=docs/screenshots node scripts/screenshots.mjs
 
 ## Android-APK
 
-Jeder Tag `vX.Y.Z` löst den GitHub-Actions-Workflow „Release" aus. Ergebnis im Release: `run-home.apk` (auf dem Handy installieren, „Unbekannte Quellen" erlauben), `dist.zip` (OTA-Bundle), `latest.json`.
+Jeder Tag `vX.Y.Z` löst den GitHub-Actions-Workflow „Release“ aus. Ergebnis im Release: `run-home.apk` (direkt installierbar), `dist.zip` (OTA-Bundle), `latest.json`. Der `versionCode` wird aus der Version abgeleitet (1.0.2 → 10002), damit jedes Release als Update über das vorherige installierbar ist.
 
 Der Workflow nutzt das auf dem Runner vorinstallierte Android SDK und JDK 21 (Temurin); fehlende SDK-Pakete werden per `sdkmanager` nachgeladen.
 
-Release erzeugen: `scripts/release.sh 1.0.1 "Was sich geändert hat"`
+Release erzeugen (auf `main`, sauberer Arbeitsbaum):
+```bash
+scripts/release.sh 1.0.3 "Was sich geändert hat"
+```
+Das Skript setzt die Version in `package.json`, committet, taggt und pusht. Der Build dauert etwa 10 Minuten.
 
-### Signatur einrichten (einmalig)
-1. GitHub → Actions → „Keystore erzeugen (einmalig)" → Run workflow mit einem Passwort.
-2. Artifact `keystore` laden, Inhalt von `keystore.b64` als Secret `ANDROID_KEYSTORE_BASE64` anlegen.
-3. Secrets `ANDROID_KEYSTORE_PASSWORD` (dein Passwort), `ANDROID_KEY_ALIAS` = `runhome`, `ANDROID_KEY_PASSWORD` (dein Passwort).
-Ohne Secrets baut der Workflow eine Debug-APK; die lässt sich nicht über eine signierte Release-APK installieren (vorher deinstallieren).
+### Signatur einrichten (einmalig, vor dem ersten Release)
+Ohne Signatur-Secrets baut der Workflow eine Debug-APK mit jedes Mal neuem Zufallsschlüssel. Dann lässt sich kein Update über die installierte App installieren, nur Deinstallieren mit Datenverlust. Deshalb vorher einmal den Release-Schlüssel hinterlegen; danach sind alle APKs mit demselben Schlüssel signiert und direkt updatefähig.
 
-**Achtung bei Debug-APKs:** Jeder CI-Lauf signiert die Debug-APK mit einem neuen, zufälligen Debug-Schlüssel. Eine neuere Debug-APK lässt sich daher nicht über die installierte drüberinstallieren. Ein Update heißt Deinstallieren, und dabei gehen alle lokalen Daten verloren. Vorher unbedingt unter Einstellungen → Daten einen JSON-Export machen und ihn danach wieder importieren. Mit eingerichteter Signatur entfällt das.
+Lokal mit JDK und [gh](https://cli.github.com) (`gh auth login`):
+```bash
+mkdir -p ~/.run-home
+keytool -genkeypair -keystore ~/.run-home/release.keystore -alias runhome -keyalg RSA -keysize 2048 -validity 10000 \
+  -dname "CN=Run Home, O=Run Home, C=DE"        # Passwort merken, für Keystore und Key dasselbe nehmen
+base64 -w0 ~/.run-home/release.keystore | gh secret set ANDROID_KEYSTORE_BASE64
+gh secret set ANDROID_KEYSTORE_PASSWORD        # Passwort eingeben
+gh secret set ANDROID_KEY_PASSWORD             # dasselbe Passwort
+gh secret set ANDROID_KEY_ALIAS --body runhome
+```
+Keystore und Passwort sicher aufbewahren: Geht der Schlüssel verloren, lassen sich spätere APKs nicht mehr als Update installieren.
+
+Alternative ohne lokales JDK: GitHub → Actions → „Keystore erzeugen (einmalig)“ → Run workflow mit Passwort, Artifact `keystore` laden und den Inhalt von `keystore.b64` als Secret `ANDROID_KEYSTORE_BASE64` eintragen, dazu die drei Passwort-/Alias-Secrets wie oben.
 
 ## Over-the-Air-Updates
-Die App lädt beim Start `latest.json` aus dem neuesten Release des öffentlichen Repos `run-home-releases`. Ist die Version neuer als die laufende, wird `dist.zip` geladen und beim nächsten Wechsel in den Hintergrund aktiviert. Reine Web-Änderungen brauchen keine neue APK. Nach nativen Änderungen (neues Capacitor-Plugin, Manifest) `minNativeVersion` im Workflow anheben und die APK neu installieren.
-
-### Öffentliches Release-Repo
-Die Build-Artefakte (`run-home.apk`, `dist.zip`, `latest.json`) liegen öffentlich in [`Alfonsinjo/run-home-releases`](https://github.com/Alfonsinjo/run-home-releases); der Quellcode bleibt im privaten Repo `run-home`. Der Release-Workflow lädt sie dort mit dem Secret `RELEASES_TOKEN` hoch (ohne Secret wird der Schritt mit einer Warnung übersprungen). **Fehlt `RELEASES_TOKEN`, fallen OTA-Updates still aus:** Die App findet unter der öffentlichen `latest.json`-URL keine neue Version und meldet weiter „Aktuell" (oder einen Fehler, falls dort noch nie etwas veröffentlicht wurde). Der Workflow zeigt dann lediglich eine Warnung, der Job bleibt grün. Empfohlen ist ein fein-granularer Token mit Contents: read/write nur für `run-home-releases`.
+Die App lädt beim Start `latest.json` aus dem neuesten Release dieses Repos. Ist die Version neuer als die laufende, wird `dist.zip` geladen und beim nächsten Wechsel in den Hintergrund aktiviert. Reine Web-Änderungen brauchen keine neue APK. Nach nativen Änderungen (neues Capacitor-Plugin, Manifest) `minNativeVersion` im Workflow anheben und die APK neu installieren.
 
 ## Daten
 Alles liegt lokal auf dem Gerät. Einstellungen → Daten: Export als JSON (komplett) oder CSV, Import mit Vorschau (Zusammenführen/Ersetzen). Die Excel „Laufliste 2026" ist als Seed eingebaut (`src/data/seed-2026.json`).
