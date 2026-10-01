@@ -35,7 +35,7 @@ export function deriveAll(state: AppState, today: string): Derived {
     finished: progress.finished,
     totalKm: progress.totalKm,
   });
-  const milestones = allMilestones(state.settings);
+  const milestones = allMilestones(state.settings, state.route);
   const dayNumber = Number(today.replace(/-/g, ''));
   return {
     today,

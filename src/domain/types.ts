@@ -2,9 +2,12 @@ export type DayEntry = { date: string; km: number; note?: string };
 
 export type Place = { label: string; lat: number; lon: number };
 
+/** Zwischenziel auf der Strecke; Reihenfolge in Settings.waypoints = Reihenfolge auf der Route. */
+export type Waypoint = Place & { id: string };
+
 export type Milestone = {
   id: string;
-  kind: 'auto' | 'manual';
+  kind: 'auto' | 'manual' | 'waypoint';
   km: number;
   title: string;
   description?: string;
@@ -33,12 +36,14 @@ export type Settings = {
   secondReminderEnabled: boolean;
   secondReminderTime: string;
   manualMilestones: Milestone[];
+  waypoints: Waypoint[];
   routeMode: 'osrm' | 'straight';
 };
 
 export type LatLon = [number, number];
 
-export type RouteData = { coords: LatLon[]; lengthKm: number; fetchedAt: string } | null;
+/** waypointKm: Routen-km an jedem Zwischenziel (Reihenfolge wie Settings.waypoints). */
+export type RouteData = { coords: LatLon[]; lengthKm: number; fetchedAt: string; waypointKm?: number[] } | null;
 
 export type AppState = {
   schemaVersion: number;
@@ -64,6 +69,7 @@ export const DEFAULT_SETTINGS: Settings = {
   secondReminderEnabled: false,
   secondReminderTime: '21:00',
   manualMilestones: [],
+  waypoints: [],
   routeMode: 'osrm',
 };
 
@@ -72,8 +78,13 @@ export function createInitialState(): AppState {
     schemaVersion: SCHEMA_VERSION,
     setupDone: false,
     entries: {},
-    settings: { ...DEFAULT_SETTINGS, manualMilestones: [] },
+    settings: { ...DEFAULT_SETTINGS, manualMilestones: [], waypoints: [] },
     route: null,
     achieved: {},
   };
+}
+
+/** Ergänzt fehlende Felder älterer gespeicherter Zustände (z. B. waypoints vor Version 1.1). */
+export function normalizeState(state: AppState): AppState {
+  return { ...state, settings: { ...DEFAULT_SETTINGS, ...state.settings, manualMilestones: state.settings?.manualMilestones ?? [], waypoints: state.settings?.waypoints ?? [] } };
 }

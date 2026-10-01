@@ -1,5 +1,5 @@
 import { Preferences } from '@capacitor/preferences';
-import { SCHEMA_VERSION, type AppState } from '@/domain/types';
+import { normalizeState, SCHEMA_VERSION, type AppState } from '@/domain/types';
 
 const KEY = 'runhome.state';
 
@@ -9,7 +9,7 @@ export async function loadState(): Promise<AppState | null> {
     if (!value) return null;
     const parsed = JSON.parse(value) as AppState;
     if (typeof parsed.schemaVersion !== 'number' || parsed.schemaVersion > SCHEMA_VERSION) return null;
-    return parsed;
+    return normalizeState(parsed);
   } catch (err) {
     console.error('[storage] load failed', err);
     return null;

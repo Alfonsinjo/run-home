@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Button, Card, DateInput, Field, Screen, useToast } from '@/components';
 import { isValidDateKey } from '@/domain/dates';
 import { formatKm } from '@/domain/progress';
-import type { DailyGoalMode, Place } from '@/domain/types';
+import type { DailyGoalMode, LatLon, Place, Waypoint } from '@/domain/types';
 import { fetchRoute } from '@/services/routing';
 import { useAppStore } from '@/store/useAppStore';
 import { DataSection } from './DataSection';
 import { MilestoneEditor } from './MilestoneEditor';
 import { PlacePicker } from './PlacePicker';
 import { ReminderSection } from './ReminderSection';
+import { WaypointEditor } from './WaypointEditor';
 import { UpdateSection } from './UpdateSection';
 
 export function SettingsScreen() {
@@ -24,13 +25,22 @@ export function SettingsScreen() {
   useEffect(() => { setTargetKm(String(settings.targetKm).replace('.', ',')); }, [settings.targetKm]);
   useEffect(() => { setCustomKm(String(settings.customDailyKm).replace('.', ',')); }, [settings.customDailyKm]);
 
-  const recompute = async (mode = settings.routeMode, home = settings.home, parents = settings.parents) => {
+  const recompute = async (mode = settings.routeMode, home = settings.home, parents = settings.parents, waypoints = settings.waypoints) => {
     if (!home || !parents) { toast('Bitte zuerst beide Orte setzen.', 'error'); return; }
     setBusy(true);
-    const { route: r, usedFallback } = await fetchRoute([home.lat, home.lon], [parents.lat, parents.lon], mode);
+    const points: LatLon[] = [[home.lat, home.lon], ...waypoints.map((w): LatLon => [w.lat, w.lon]), [parents.lat, parents.lon]];
+    const { route: r, profile } = await fetchRoute(points, mode);
     setRoute(r);
     setBusy(false);
-    toast(usedFallback ? `Straßenroute nicht verfügbar, Luftlinie: ${formatKm(r.lengthKm)}` : `Route: ${formatKm(r.lengthKm)}`, usedFallback ? 'error' : 'success');
+    const msg = profile === 'foot' ? `Fußroute: ${formatKm(r.lengthKm)}`
+      : profile === 'car' ? `Fußrouting nicht erreichbar, Autoroute: ${formatKm(r.lengthKm)}`
+      : mode === 'straight' ? `Luftlinie: ${formatKm(r.lengthKm)}` : `Routing nicht erreichbar, Luftlinie: ${formatKm(r.lengthKm)}`;
+    toast(msg, profile === 'foot' || mode === 'straight' ? 'success' : 'error');
+  };
+
+  const changeWaypoints = (list: Waypoint[]) => {
+    update({ waypoints: list });
+    if (settings.home && settings.parents) void recompute(settings.routeMode, settings.home, settings.parents, list);
   };
 
   // Ein neuer Ort macht die alte Route ungültig; sind beide Orte gesetzt, wird sofort neu berechnet.
@@ -65,10 +75,11 @@ export function SettingsScreen() {
     <Screen title="Einstellungen">
       <PlacePicker label="Dein Zuhause" value={settings.home} onChange={(p) => changePlace('home', p)} />
       <PlacePicker label="Deine Eltern" value={settings.parents} onChange={(p) => changePlace('parents', p)} center={settings.home ? [settings.home.lat, settings.home.lon] : undefined} />
+      <WaypointEditor waypoints={settings.waypoints} onChange={changeWaypoints} home={settings.home} parents={settings.parents} />
       <Card title="Route" action={route ? <span className="pill num">{formatKm(route.lengthKm)}</span> : undefined}>
         <Field label="Art">
           <select value={settings.routeMode} onChange={(e) => { const m = e.target.value as 'osrm' | 'straight'; update({ routeMode: m }); void recompute(m); }}>
-            <option value="osrm">Straßenroute (OSRM)</option>
+            <option value="osrm">Fußroute (OSRM)</option>
             <option value="straight">Luftlinie</option>
           </select>
         </Field>

@@ -79,7 +79,7 @@ export function parseExportJson(text: string): AppState {
     schemaVersion: SCHEMA_VERSION,
     setupDone: data.setupDone === true,
     entries,
-    settings: { ...DEFAULT_SETTINGS, ...(data.settings ?? {}), manualMilestones: [...(data.settings?.manualMilestones ?? [])] },
+    settings: { ...DEFAULT_SETTINGS, ...(data.settings ?? {}), manualMilestones: [...(data.settings?.manualMilestones ?? [])], waypoints: [...(data.settings?.waypoints ?? [])] },
     route: data.route ?? base.route,
     achieved: { ...(data.achieved ?? {}) },
   };

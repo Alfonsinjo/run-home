@@ -6,7 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 export function ProgressCard({ d }: { d: Derived }) {
   const { progress, milestones } = d;
   const targetKm = useAppStore((s) => s.settings.targetKm);
-  const markers: ProgressMarker[] = milestones.filter((m) => m.km < targetKm).map((m) => ({ percent: m.km / targetKm, done: m.km <= progress.totalKm, title: `${m.title} (${formatKm(m.km)})`, manual: m.kind === 'manual' }));
+  const markers: ProgressMarker[] = milestones.filter((m) => m.km < targetKm).map((m) => ({ percent: m.km / targetKm, done: m.km <= progress.totalKm, title: `${m.title} (${formatKm(m.km)})`, manual: m.kind !== 'auto' }));
   const pm = progress.plusMinusKm;
   return (
     <Card aria-label="Fortschritt">

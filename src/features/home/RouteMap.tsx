@@ -51,7 +51,7 @@ export function RouteMap({ route, home, parents, totalKm, targetKm, milestones, 
   const position = useMemo<LatLon | null>(() => (coords.length ? pointAtKm(coords, routeKm) : null), [coords, routeKm]);
   const milestonePositions = useMemo(
     () => milestones
-      .filter((m) => m.kind === 'manual' || MAP_PERCENT_IDS.has(m.id) || m.id === nextId)
+      .filter((m) => m.kind !== 'auto' || MAP_PERCENT_IDS.has(m.id) || m.id === nextId)
       .map((m) => ({ m, at: pointAtKm(coords, progressToRouteKm(m.km, targetKm, lengthKm)) })),
     [coords, milestones, targetKm, lengthKm, nextId],
   );
@@ -81,7 +81,7 @@ export function RouteMap({ route, home, parents, totalKm, targetKm, milestones, 
         {milestonePositions.map(({ m, at }) => {
           const isDone = m.id in achieved;
           return (
-            <Marker key={m.id} position={at} icon={milestoneIcon(isDone, m.id === nextId, m.kind === 'manual')}>
+            <Marker key={m.id} position={at} icon={milestoneIcon(isDone, m.id === nextId, m.kind)}>
               <Popup><b>{m.title}</b><br />{formatKm(m.km)}{isDone ? ` · erreicht am ${achieved[m.id]}` : ` · noch ${formatKm(Math.max(0, m.km - totalKm))}`}</Popup>
             </Marker>
           );

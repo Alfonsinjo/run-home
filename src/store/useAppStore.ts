@@ -5,7 +5,7 @@ import { FUN_FACTS } from '@/domain/funfacts';
 import { allMilestones } from '@/domain/milestones';
 import { computeProgress } from '@/domain/progress';
 import { mergeEntries, replaceEntries } from '@/domain/importer';
-import { createInitialState, type AppState, type DayEntry, type FunFact, type Milestone, type RouteData, type Settings } from '@/domain/types';
+import { createInitialState, normalizeState, type AppState, type DayEntry, type FunFact, type Milestone, type RouteData, type Settings } from '@/domain/types';
 import { loadState, saveState } from '@/services/storage';
 
 export type Celebration = { kind: 'milestone'; item: Milestone } | { kind: 'funfact'; item: FunFact };
@@ -32,16 +32,16 @@ export function pickAppState(s: StoreState): AppState {
   return { schemaVersion: s.schemaVersion, setupDone: s.setupDone, entries: s.entries, settings: s.settings, route: s.route, achieved: s.achieved };
 }
 
-function achievables(settings: Settings): Array<Achievable & { celebration: Celebration }> {
+function achievables(settings: Settings, route: RouteData): Array<Achievable & { celebration: Celebration }> {
   return [
-    ...allMilestones(settings).map((m) => ({ id: m.id, km: m.km, celebration: { kind: 'milestone', item: m } as Celebration })),
+    ...allMilestones(settings, route).map((m) => ({ id: m.id, km: m.km, celebration: { kind: 'milestone', item: m } as Celebration })),
     ...FUN_FACTS.map((f) => ({ id: f.id, km: f.km, celebration: { kind: 'funfact', item: f } as Celebration })),
   ];
 }
 
 /** Recomputes `achieved` from history; returns celebrations for ids that are new compared to `before`. */
-function recomputeAchieved(entries: Record<string, DayEntry>, settings: Settings, before: Record<string, string>) {
-  const items = achievables(settings);
+function recomputeAchieved(entries: Record<string, DayEntry>, settings: Settings, route: RouteData, before: Record<string, string>) {
+  const items = achievables(settings, route);
   const achieved = achievedDates(entries, items, settings.startDate);
   const celebrations = items
     .filter((i) => i.id in achieved && !(i.id in before))
@@ -63,14 +63,14 @@ export const useAppStore = create<StoreState>()((set, get) => ({
 
   async hydrate() {
     const loaded = await loadState();
-    set({ ...(loaded ?? createInitialState()), hydrated: true });
+    set({ ...(loaded ? normalizeState(loaded) : createInitialState()), hydrated: true });
   },
 
   saveEntry(entry, today = get().today) {
     const km = Math.round(entry.km * 100) / 100;
     const clean: DayEntry = entry.note?.trim() ? { date: entry.date, km, note: entry.note.trim() } : { date: entry.date, km };
     const entries = { ...get().entries, [entry.date]: clean };
-    const { achieved, celebrations } = recomputeAchieved(entries, get().settings, get().achieved);
+    const { achieved, celebrations } = recomputeAchieved(entries, get().settings, get().route, get().achieved);
     void today; // Datum des Erreichens stammt aus der Historie (achievedDates); `today` bleibt für spätere Nutzung in der Signatur
     set({ entries, achieved, celebrations: [...get().celebrations, ...celebrations] });
     return celebrations;
@@ -79,18 +79,19 @@ export const useAppStore = create<StoreState>()((set, get) => ({
   deleteEntry(date) {
     const entries = { ...get().entries };
     delete entries[date];
-    const { achieved } = recomputeAchieved(entries, get().settings, get().achieved);
+    const { achieved } = recomputeAchieved(entries, get().settings, get().route, get().achieved);
     set({ entries, achieved });
   },
 
   updateSettings(patch) {
     const settings = { ...get().settings, ...patch };
-    const { achieved } = recomputeAchieved(get().entries, settings, get().achieved);
+    const { achieved } = recomputeAchieved(get().entries, settings, get().route, get().achieved);
     set({ settings, achieved });
   },
 
   setRoute(route) {
-    set({ route });
+    const { achieved } = recomputeAchieved(get().entries, get().settings, route, get().achieved);
+    set({ route, achieved });
   },
 
   completeSetup() {
@@ -99,13 +100,13 @@ export const useAppStore = create<StoreState>()((set, get) => ({
 
   importEntries(incoming, mode) {
     const entries = mode === 'replace' ? replaceEntries(incoming) : mergeEntries(get().entries, incoming);
-    const { achieved } = recomputeAchieved(entries, get().settings, {});
+    const { achieved } = recomputeAchieved(entries, get().settings, get().route, {});
     set({ entries, achieved, celebrations: [] });
   },
 
   importState(state) {
-    const { achieved } = recomputeAchieved(state.entries, state.settings, {});
-    set({ ...state, achieved, celebrations: [] });
+    const { achieved } = recomputeAchieved(state.entries, state.settings, state.route, {});
+    set({ ...normalizeState(state), achieved, celebrations: [] });
   },
 
   resetAll() {

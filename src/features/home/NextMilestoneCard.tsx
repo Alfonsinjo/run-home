@@ -7,7 +7,7 @@ export function NextMilestoneCard({ d }: { d: Derived }) {
   const rest = Math.max(0, d.next.km - d.progress.totalKm);
   const days = d.dailyGoal > 0 ? Math.ceil(rest / d.dailyGoal) : null;
   return (
-    <Card title="Nächster Meilenstein" action={<span className="card-meta">{d.next.kind === 'manual' ? 'eigener' : 'automatisch'}</span>}>
+    <Card title="Nächster Meilenstein" action={<span className="card-meta">{d.next.kind === 'manual' ? 'eigener' : d.next.kind === 'waypoint' ? 'Zwischenziel' : 'automatisch'}</span>}>
       <div className="row between" style={{ alignItems: 'flex-end' }}>
         <div className="stat">
           <div className="display" style={{ fontSize: 26 }}>{d.next.title}</div>

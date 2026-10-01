@@ -4,7 +4,7 @@ import { Button, DateInput, Field, Screen, TimeInput, useToast } from '@/compone
 import seed from '@/data/seed-2026.json';
 import { previewEntries } from '@/domain/importer';
 import { formatKm } from '@/domain/progress';
-import type { DailyGoalMode, DayEntry, Milestone, Place, RouteData } from '@/domain/types';
+import type { DailyGoalMode, DayEntry, LatLon, Milestone, Place, RouteData, Waypoint } from '@/domain/types';
 import { DEFAULT_SETTINGS } from '@/domain/types';
 import { fetchRoute } from '@/services/routing';
 import { isValidDateKey } from '@/domain/dates';
@@ -14,6 +14,7 @@ import { parseCsv, parseEntriesJson } from '@/domain/importer';
 import { useAppStore } from '@/store/useAppStore';
 import { MilestoneEditor } from '@/features/settings/MilestoneEditor';
 import { PlacePicker } from '@/features/settings/PlacePicker';
+import { WaypointEditor } from '@/features/settings/WaypointEditor';
 
 const STEPS = ['Willkommen', 'Orte', 'Ziel', 'Meilensteine', 'Erinnerung', 'Daten'] as const;
 
@@ -32,6 +33,7 @@ export function SetupWizard() {
   const [mode, setMode] = useState<DailyGoalMode>(store.settings.dailyGoalMode);
   const [customDailyKm, setCustomDailyKm] = useState(String(store.settings.customDailyKm));
   const [milestones, setMilestones] = useState<Milestone[]>(store.settings.manualMilestones);
+  const [waypoints, setWaypoints] = useState<Waypoint[]>(store.settings.waypoints);
   const [reminderEnabled, setReminderEnabled] = useState(DEFAULT_SETTINGS.reminderEnabled);
   const [reminderTime, setReminderTime] = useState(DEFAULT_SETTINGS.reminderTime);
   const [imported, setImported] = useState<DayEntry[] | null>(null);
@@ -40,13 +42,14 @@ export function SetupWizard() {
   const targetValid = Number.isFinite(targetNum) && targetNum > 0;
   const datesValid = isValidDateKey(startDate) && isValidDateKey(deadline) && startDate < deadline;
 
-  const computeRoute = async () => {
+  const computeRoute = async (wps = waypoints) => {
     if (!home || !parents) return;
     setRouteBusy(true);
-    const { route: r, usedFallback } = await fetchRoute([home.lat, home.lon], [parents.lat, parents.lon], 'osrm');
+    const points: LatLon[] = [[home.lat, home.lon], ...wps.map((w): LatLon => [w.lat, w.lon]), [parents.lat, parents.lon]];
+    const { route: r, profile } = await fetchRoute(points, 'osrm');
     setRoute(r);
     setRouteBusy(false);
-    toast(usedFallback ? `Straßenroute nicht verfügbar, Luftlinie: ${formatKm(r.lengthKm)}` : `Route berechnet: ${formatKm(r.lengthKm)}`, usedFallback ? 'error' : 'success');
+    toast(profile === 'foot' ? `Fußroute berechnet: ${formatKm(r.lengthKm)}` : profile === 'car' ? `Fußrouting nicht erreichbar, Autoroute: ${formatKm(r.lengthKm)}` : `Routing nicht erreichbar, Luftlinie: ${formatKm(r.lengthKm)}`, profile === 'foot' ? 'success' : 'error');
   };
 
   const importFile = async () => {
@@ -64,7 +67,7 @@ export function SetupWizard() {
     store.updateSettings({
       home, parents, targetKm: Math.round(targetNum * 10) / 10, startDate, deadline, dailyGoalMode: mode,
       customDailyKm: Number(customDailyKm.replace(',', '.')) || DEFAULT_SETTINGS.customDailyKm,
-      manualMilestones: milestones, reminderEnabled, reminderTime,
+      manualMilestones: milestones, waypoints, reminderEnabled, reminderTime,
     });
     store.setRoute(route);
     if (imported) store.importEntries(imported, 'replace');
@@ -104,7 +107,7 @@ export function SetupWizard() {
           <PlacePicker label="Dein Zuhause" value={home} onChange={(p) => { setHome(p); setRoute(null); }} />
           <PlacePicker label="Deine Eltern" value={parents} onChange={(p) => { setParents(p); setRoute(null); }} center={home ? [home.lat, home.lon] : undefined} />
           {home && parents && (
-            <Button variant="secondary" onClick={computeRoute} disabled={routeBusy}>{routeBusy ? 'Berechne…' : route ? `Route: ${formatKm(route.lengthKm)} (neu berechnen)` : 'Route berechnen'}</Button>
+            <Button variant="secondary" onClick={() => computeRoute()} disabled={routeBusy}>{routeBusy ? 'Berechne…' : route ? `Route: ${formatKm(route.lengthKm)} (neu berechnen)` : 'Route berechnen'}</Button>
           )}
           {!home || !parents ? <p className="muted">Du kannst die Orte auch später in den Einstellungen setzen.</p> : null}
         </>
@@ -129,7 +132,12 @@ export function SetupWizard() {
           {mode === 'custom' && <Field label="Eigenes Tagesziel (km)"><input value={customDailyKm} onChange={(e) => setCustomDailyKm(e.target.value)} inputMode="decimal" /></Field>}
         </div>
       )}
-      {step === 3 && <MilestoneEditor milestones={milestones} onChange={setMilestones} targetKm={targetValid ? targetNum : 510} route={route} />}
+      {step === 3 && (
+        <>
+          <WaypointEditor waypoints={waypoints} onChange={(list) => { setWaypoints(list); if (home && parents) void computeRoute(list); }} home={home} parents={parents} />
+          <MilestoneEditor milestones={milestones} onChange={setMilestones} targetKm={targetValid ? targetNum : 510} route={route} />
+        </>
+      )}
       {step === 4 && (
         <div className="card">
           <label className="toggle-row"><span>Tägliche Erinnerung, wenn noch nichts eingetragen ist</span><input type="checkbox" checked={reminderEnabled} onChange={(e) => setReminderEnabled(e.target.checked)} /></label>

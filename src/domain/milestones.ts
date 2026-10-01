@@ -1,4 +1,5 @@
-import type { Milestone, Settings } from './types';
+import { kmAtNearestPoint } from './route';
+import type { Milestone, RouteData, Settings } from './types';
 
 const PERCENT_MARKS: Array<[number, string]> = [
   [0.1, '10 % geschafft'],
@@ -29,8 +30,22 @@ export function autoMilestones(targetKm: number): Milestone[] {
   return [...byKm.values()].sort((a, b) => a.km - b.km);
 }
 
-export function allMilestones(settings: Pick<Settings, 'targetKm' | 'manualMilestones'>): Milestone[] {
-  return [...autoMilestones(settings.targetKm), ...settings.manualMilestones].sort((a, b) => a.km - b.km);
+/**
+ * Zwischenziele als Meilensteine: Routen-km am Zwischenziel, proportional auf die Zieldistanz umgerechnet.
+ * Ohne Route gibt es keine Position, dann entfallen sie.
+ */
+export function waypointMilestones(settings: Pick<Settings, 'targetKm'> & Partial<Pick<Settings, 'waypoints'>>, route: RouteData): Milestone[] {
+  if (!route || route.lengthKm <= 0 || !settings.waypoints?.length) return [];
+  const exact = route.waypointKm && route.waypointKm.length === settings.waypoints.length ? route.waypointKm : null;
+  return settings.waypoints.map((w, i) => {
+    const routeKm = exact ? exact[i] : kmAtNearestPoint(route.coords, [w.lat, w.lon]);
+    const km = Math.round((routeKm / route.lengthKm) * settings.targetKm * 10) / 10;
+    return { id: `wp-${w.id}`, kind: 'waypoint', km, title: w.label, description: 'Zwischenziel auf deiner Strecke.' };
+  });
+}
+
+export function allMilestones(settings: Pick<Settings, 'targetKm' | 'manualMilestones'> & Partial<Pick<Settings, 'waypoints'>>, route: RouteData = null): Milestone[] {
+  return [...autoMilestones(settings.targetKm), ...settings.manualMilestones, ...waypointMilestones(settings, route)].sort((a, b) => a.km - b.km);
 }
 
 export function nextMilestone(milestones: Milestone[], totalKm: number): Milestone | null {

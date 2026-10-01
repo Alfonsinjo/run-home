@@ -77,6 +77,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 
 /* Karten */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; }
 .card-head h2 { font-size: 15px; font-weight: 600; }
 .card-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }

@@ -1,6 +1,6 @@
 # Run Home
 
-Persönlicher Lauf-Tracker: jeden Tag Kilometer eintragen und auf der Karte sehen, wie weit du auf der Strecke zu deinen Eltern schon bist. Mit Meilensteinen, Fun Facts (mit Quellen), Wochenziel, Erinnerungen und Over-the-Air-Updates.
+Persönlicher Lauf-Tracker: jeden Tag Kilometer eintragen und auf der Karte sehen, wie weit du auf der Strecke zu deinen Eltern schon bist. Mit Zwischenzielen, Meilensteinen, Fun Facts (mit Quellen), Wochenziel, Erinnerungen und Over-the-Air-Updates.
 
 **Installieren:** [run-home.apk](https://github.com/Alfonsinjo/run-home/releases/latest/download/run-home.apk) aufs Handy laden, öffnen, „Unbekannte Quellen“ einmalig erlauben, fertig. Keine Konten, keine Schlüssel, alle Daten bleiben auf dem Gerät. Alle Releases: [Releases](https://github.com/Alfonsinjo/run-home/releases).
 
@@ -15,6 +15,11 @@ Persönlicher Lauf-Tracker: jeden Tag Kilometer eintragen und auf der Karte sehe
 | ![Ziele](docs/screenshots/milestones.png) | ![Einstellungen](docs/screenshots/settings.png) |
 
 Vorher/Nachher-Vergleich der Design-Politur: [docs/screenshots/README.md](docs/screenshots/README.md). Die Karte nutzt OpenStreetMap-Kacheln, die per CSS-Filter abgedunkelt werden.
+
+## Route und Zwischenziele
+Die Strecke wird als Fußroute berechnet (OSRM-Profil `foot` auf `routing.openstreetmap.de`). Fällt der Server aus, folgt die Autoroute der OSRM-Demo, zuletzt die Luftlinie; die App zeigt an, was sie bekommen hat.
+
+Unter Einstellungen → Zwischenziele lassen sich Orte eintragen, über die die Strecke führen soll (Suche oder Karte). Beim Einfügen wählt man, nach welchem Punkt das Ziel kommt; die Pfeile ändern die Reihenfolge, Tippen auf den Namen benennt um. Die Route wird nach jeder Änderung neu berechnet, und jedes Zwischenziel erscheint als Meilenstein in Zielen, Fortschrittsbalken und Karte (Flagge).
 
 ## Am Windows-PC testen (WSL)
 

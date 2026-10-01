@@ -6,14 +6,14 @@ import { formatKm } from '@/domain/progress';
 import { useAppStore } from '@/store/useAppStore';
 import { useDerived } from '@/store/selectors';
 
-type Item = { id: string; km: number; title: string; text?: string; source?: string; kind: 'milestone' | 'funfact' | 'manual' };
+type Item = { id: string; km: number; title: string; text?: string; source?: string; kind: 'milestone' | 'funfact' | 'manual' | 'waypoint' };
 
 export function MilestonesScreen() {
   const d = useDerived();
   const achieved = useAppStore((s) => s.achieved);
   const [filter, setFilter] = useState<'all' | 'milestone' | 'funfact'>('all');
   const items = useMemo<Item[]>(() => {
-    const ms: Item[] = d.milestones.map((m) => ({ id: m.id, km: m.km, title: m.title, text: m.description, kind: m.kind === 'manual' ? 'manual' : 'milestone' }));
+    const ms: Item[] = d.milestones.map((m) => ({ id: m.id, km: m.km, title: m.title, text: m.description, kind: m.kind === 'auto' ? 'milestone' : m.kind }));
     const ff: Item[] = FUN_FACTS.map((f) => ({ id: f.id, km: f.km, title: f.title, text: f.text, source: f.source, kind: 'funfact' }));
     return [...ms, ...ff].sort((a, b) => a.km - b.km);
   }, [d.milestones]);
@@ -43,7 +43,7 @@ export function MilestonesScreen() {
                     <span className="t-km">{formatKm(i.km)}</span>
                   </div>
                   <div className="label">
-                    {i.kind === 'funfact' ? 'Fun Fact' : i.kind === 'manual' ? 'Eigener Meilenstein' : 'Meilenstein'}
+                    {i.kind === 'funfact' ? 'Fun Fact' : i.kind === 'manual' ? 'Eigener Meilenstein' : i.kind === 'waypoint' ? 'Zwischenziel' : 'Meilenstein'}
                     {done ? ` · erreicht am ${formatDateDe(achieved[i.id])}` : ` · noch ${formatKm(Math.max(0, i.km - total))}`}
                     {isNext ? ' · als Nächstes' : ''}
                   </div>

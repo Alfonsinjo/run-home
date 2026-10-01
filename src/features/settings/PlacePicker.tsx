@@ -13,7 +13,7 @@ function ClickToPlace({ onPick }: { onPick(p: LatLon): void }) {
   return null;
 }
 
-export function PlacePicker({ label, value, onChange, center = [51.16, 10.45] }: { label: string; value: Place | null; onChange(p: Place | null): void; center?: LatLon }) {
+export function PlacePicker({ label, value, onChange, center = [51.16, 10.45], bare = false, hint }: { label: string; value: Place | null; onChange(p: Place | null): void; center?: LatLon; /** ohne eigenen Karten-Rahmen, zum Einbetten in andere Karten */ bare?: boolean; hint?: string }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeoResult[]>([]);
   const [error, setError] = useState<string | undefined>();
@@ -48,8 +48,8 @@ export function PlacePicker({ label, value, onChange, center = [51.16, 10.45] }:
   const mapCenter: LatLon = value ? [value.lat, value.lon] : center;
 
   return (
-    <div className="card">
-      <Field label={label} error={error} hint={loading ? 'Suche…' : 'Adresse oder Ort eingeben, oder auf der Karte tippen.'}>
+    <div className={bare ? 'stack' : 'card'}>
+      <Field label={label} error={error} hint={loading ? 'Suche…' : hint ?? 'Adresse oder Ort eingeben, oder auf der Karte tippen.'}>
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="z. B. Musterstraße 1, Frankfurt" autoComplete="off" />
       </Field>
       {results.length > 0 && (
