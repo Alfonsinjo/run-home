@@ -10,6 +10,7 @@ import { MilestoneEditor } from './MilestoneEditor';
 import { PlacePicker } from './PlacePicker';
 import { ReminderSection } from './ReminderSection';
 import { WaypointEditor } from './WaypointEditor';
+import { RouteVariants } from './RouteVariants';
 import { UpdateSection } from './UpdateSection';
 
 export function SettingsScreen() {
@@ -76,7 +77,7 @@ export function SettingsScreen() {
       <PlacePicker label="Dein Zuhause" value={settings.home} onChange={(p) => changePlace('home', p)} />
       <PlacePicker label="Deine Eltern" value={settings.parents} onChange={(p) => changePlace('parents', p)} center={settings.home ? [settings.home.lat, settings.home.lon] : undefined} />
       <WaypointEditor waypoints={settings.waypoints} onChange={changeWaypoints} home={settings.home} parents={settings.parents} />
-      <Card title="Route" action={route ? <span className="pill num">{formatKm(route.lengthKm)}</span> : undefined}>
+      <Card title="Route" action={route ? <span className="pill num">{formatKm(route.lengthKm)}{route.variant ? ` · Variante ${route.variant}` : ''}</span> : undefined}>
         <Field label="Art">
           <select value={settings.routeMode} onChange={(e) => { const m = e.target.value as 'osrm' | 'straight'; update({ routeMode: m }); void recompute(m); }}>
             <option value="osrm">Fußroute (OSRM)</option>
@@ -85,6 +86,14 @@ export function SettingsScreen() {
         </Field>
         <Button variant="secondary" onClick={() => recompute()} disabled={busy}>{busy ? 'Berechne…' : 'Route neu berechnen'}</Button>
         {route && <Button variant="ghost" onClick={() => { setTargetKm(String(route.lengthKm).replace('.', ',')); update({ targetKm: route.lengthKm }); }}>Routenlänge als Ziel übernehmen</Button>}
+        {settings.home && settings.parents && (
+          <RouteVariants
+            points={[[settings.home.lat, settings.home.lon], ...settings.waypoints.map((w): LatLon => [w.lat, w.lon]), [settings.parents.lat, settings.parents.lon]]}
+            mode={settings.routeMode}
+            current={route}
+            onPick={(r) => { setRoute(r); toast(`Variante ${r.variant} übernommen: ${formatKm(r.lengthKm)}`, 'success'); }}
+          />
+        )}
       </Card>
       <Card title="Ziel">
         <Field label="Zieldistanz (km)"><input value={targetKm} onChange={(e) => setTargetKm(e.target.value)} onBlur={commitTarget} inputMode="decimal" /></Field>

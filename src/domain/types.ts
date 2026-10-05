@@ -43,7 +43,8 @@ export type Settings = {
 export type LatLon = [number, number];
 
 /** waypointKm: Routen-km an jedem Zwischenziel (Reihenfolge wie Settings.waypoints). */
-export type RouteData = { coords: LatLon[]; lengthKm: number; fetchedAt: string; waypointKm?: number[] } | null;
+/** variant: gewählte Routenvariante (1-basiert), wenn der Nutzer unter mehreren gewählt hat. */
+export type RouteData = { coords: LatLon[]; lengthKm: number; fetchedAt: string; waypointKm?: number[]; variant?: number } | null;
 
 export type AppState = {
   schemaVersion: number;
